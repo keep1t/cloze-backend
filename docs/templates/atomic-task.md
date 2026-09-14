@@ -25,9 +25,10 @@
 - Inputs, types, validation, and synthetic examples:
 - Outputs/errors and edge-case behavior:
 - Authorization/RLS/privacy and required configuration:
+- Test files (for product code): paths, what each covers, and the failing command output:
 - Concrete ordered steps:
 
-Mark a section “not applicable” with its reason when it does not apply; do not leave
+Mark a section "not applicable" with its reason when it does not apply; do not leave
 gaps that require the developer to design the solution.
 
 ## Criteria and verification
@@ -35,6 +36,9 @@ gaps that require the developer to design the solution.
 | ID | Observable criterion | Method/command and prerequisites | Expected result |
 | --- | --- | --- | --- |
 | AC1 | <one outcome> | <real verification> | <evidence> |
+
+For product code tasks, include at least one test criterion verifying the architect's
+tests pass after implementation and failed before.
 
 ## Stop conditions
 
@@ -46,6 +50,7 @@ gaps that require the developer to design the solution.
 
 - Criteria met and actual evidence, commands/results, and checks not run:
 - Changed files and MEMORY/README update:
+- Test results: architect's tests now pass, with command/output and pre-implementation failure evidence:
 - Outstanding work and review findings with IDs:
 - Technical review status:
 - Human review/commit: pending; record only actual human authorization.

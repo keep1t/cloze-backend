@@ -57,16 +57,37 @@ goal. For small changes, the coordinator writes the same minimum specification.
 The coordinator also inspects new files: this repository can contain untracked files
 that do not appear in `git diff`. There is no need to read the entire codebase.
 
+## Test-driven development
+
+For product code (Edge Functions, migrations, RLS policies, database functions),
+the architect writes failing tests before the developer implements. The developer's
+job is to make those tests pass, not to write tests from a separate specification.
+
+1. **Architect** writes tests in `supabase/tests/` and verifies they fail against
+   the current codebase. Test file paths and the failing command output are part of
+   the READY deliverable.
+2. **Developer** implements the solution and runs the architect's tests until they
+   pass. The developer does not modify the architect's test files unless a contract
+   change returns to the architect.
+3. **Reviewer** checks that tests existed before implementation, fail before and
+   pass after, and cover the acceptance criteria.
+
+TDD applies to product code only. Harness, documentation, and configuration
+changes follow the standard architect → developer → reviewer sequence without
+the test-writing step.
+
 ## Sequence and loop
 
 1. **Coordinator:** bounds the assignment and records the initial state. Use the
    full workflow for contracts, schema, authorization, or architecture. For clear,
    small documentation/configuration changes, define brief criteria and send them
    directly to the developer; record the reason.
-2. **Architect:** delivers a read-only plan. `NEEDS_DECISION` stops dependent work;
-   `READY` lets the coordinator accept the plan within scope.
-3. **Developer:** implements, verifies, and updates memory and README. For small
-   changes, the coordinator may take this role while retaining an independent reviewer.
+2. **Architect:** delivers a read-only plan with failing tests for product code.
+   `NEEDS_DECISION` stops dependent work; `READY` lets the coordinator accept the
+   plan within scope.
+3. **Developer:** implements to pass the architect's tests, verifies, and updates
+   memory and README. For small changes, the coordinator may take this role while
+   retaining an independent reviewer.
 4. **Independent reviewer:** inspects the delivery and evidence. Does not edit.
 5. **Correction:** `CHANGES_REQUESTED` returns to the developer with concrete IDs;
    then it is reviewed again. A contract change returns to the architect.

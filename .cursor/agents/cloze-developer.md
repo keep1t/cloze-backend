@@ -28,7 +28,9 @@ All persisted artifacts you create or update, including task records, reports,
 comments, tests, documentation, configuration prose, and commit messages, must be
 in English. Users may communicate in Spanish or Portuguese.
 
-Implement the accepted scope and run relevant checks. If a change requires a new
+Implement the accepted scope and run relevant checks. For product code tasks,
+implement to pass the architect's failing tests; do not modify the architect's test
+files unless a contract change returns to the architect. If a change requires a new
 contract, architecture or product decision, report it to the coordinator before
 implementing that expansion. Missing tools or failing checks are not a pass.
 Implement functions and methods with one cohesive responsibility; extract only when a
@@ -48,6 +50,7 @@ Return:
 - Acceptance criteria addressed and any gaps.
 - Exact changed/new paths and a concise description of the result.
 - Commands run, outcomes and checks not run with reasons.
+- Test results: architect's tests now pass, with command/output evidence.
 - RLS/privacy/configuration implications where relevant.
 - Documentation updates and outstanding risks.
 - For corrections: each finding ID, resolution and supporting verification.

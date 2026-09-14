@@ -20,6 +20,9 @@ record directly, but must not omit it. Verify:
 - Numbered criteria and expected evidence: success, rejection, and authorization
   where applicable. Commands and prerequisites are verified; do not demand fictional tests.
 - No unresolved product, security, or architecture decision is in scope.
+- For product code tasks (Edge Functions, migrations, RLS, database functions):
+  test files in `supabase/tests/` with verification that they fail against the
+  current codebase. Include the failing command and output in the task.
 
 If there are multiple outcomes, independent contexts, or open decisions, split the
 task or return it to design. Do not separate a migration from its RLS policies or
@@ -65,3 +68,7 @@ uncertainties, and a status (`IMPLEMENTED`, `NEEDS_CLARIFICATION`, or `BLOCKED`)
 the reviewer compares the result with the task and checks scope did not expand. The
 coordinator keeps only active task IDs/paths and status in memory. Do not duplicate
 task records there. Human authorization remains required before project commits.
+
+For product code tasks, the developer's delivery must include the test results:
+the architect's tests now pass, with the command and output as evidence. The reviewer
+verifies tests existed before implementation and cover the acceptance criteria.

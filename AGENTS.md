@@ -80,6 +80,7 @@ a completion requirement, not a claim that Git hooks can verify semantic accurac
 ## Agent workflow
 
 - Architect/design work must produce READY atomic task files using `docs/atomic-tasks.md` and its template. Developers receive one task at a time with verified contracts, bounded files, acceptance evidence and stop conditions. The coordinator must validate readiness even for small tasks.
+- For product code (Edge Functions, migrations, RLS, database functions), the architect writes failing tests before the developer implements. Tests are verified to fail against the current codebase and included in the READY deliverable. The developer implements to pass those tests. TDD does not apply to harness, documentation, or configuration changes.
 - Use an explicitly selected, available lower-cost model for developer delegation; do not silently inherit a costly model or invent model IDs. Record the choice in the task; if selection is missing, resolve it before dispatch. Developers return NEEDS_CLARIFICATION instead of guessing missing design decisions.
 
 - Primary development environments are VS Code, Codex and OpenCode. See `docs/development-tools.md`. Use this file as the common entry point; do not assume Cursor rule/agent discovery outside Cursor. OpenCode role adapters live in `opencode.json`; canonical prompts remain shared in `.cursor/agents/`.

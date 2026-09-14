@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-14 — function responsibility and deterministic-behavior policy implemented.
+Last updated: 2026-09-14 — TDD workflow implemented.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -29,6 +29,10 @@ history; confirm relevant facts before acting.
 - `harness-srp-determinism` is technically REVIEWED and APPROVED; human review remains
   pending. It adds practical cohesive-responsibility and deterministic-behavior
   requirements to global guidance, applicable rules, every role prompt, and the workflow.
+- `harness-tdd` is technically REVIEWED and APPROVED; human review remains
+  pending. It adds test-driven development to the pipeline: architect writes failing
+  tests for product code, developer implements to pass them. TDD applies to Edge
+  Functions, migrations, RLS, and database functions only.
 
 ## Decisions and boundaries
 
@@ -91,6 +95,14 @@ isolated clone. Obtain them when needed; do not invent them.
 - `harness-srp-determinism` updated `AGENTS.md`, `.cursor/rules/core.mdc`,
   `.cursor/rules/edge-functions.mdc`, all `.cursor/agents/cloze-*.md` prompts, and
   `docs/development-workflow.md`. `git diff --check` and
+  `python3 scripts/security_gate.py worktree` passed. A scoped search confirmed the
+  policy in required instructions, rules, prompts, and workflow. No product behavior,
+  RLS, privacy, secrets, or runtime configuration changed. Independent review returned
+  APPROVED; no commit was created and human authorization remains pending.
+- `harness-tdd` updated `AGENTS.md`, `.cursor/agents/cloze-architect.md`,
+  `.cursor/agents/cloze-developer.md`, `.cursor/agents/cloze-reviewer.md`,
+  `docs/atomic-tasks.md`, `docs/development-workflow.md`, and
+  `docs/templates/atomic-task.md`. Created `docs/tasks/harness-tdd.md`. `git diff --check` and
   `python3 scripts/security_gate.py worktree` passed. A scoped search confirmed the
   policy in required instructions, rules, prompts, and workflow. No product behavior,
   RLS, privacy, secrets, or runtime configuration changed. Independent review returned

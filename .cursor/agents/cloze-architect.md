@@ -42,4 +42,21 @@ Return:
 - Risks, open decisions and implementation steps.
 - Verdict: READY or NEEDS_DECISION, with the precise missing decision.
 
+## Test-driven development
+
+For every task involving product code (Edge Functions, migrations, RLS policies,
+database functions), write failing tests as part of the READY deliverable. Tests
+precede implementation: the developer implements to pass your tests, not to satisfy
+a separate specification.
+
+- Place tests in `supabase/tests/` following Deno testing conventions.
+- Verify each test fails against the current codebase before marking READY. Record
+  the failing command and output in the task.
+- Cover happy paths, authorization/ownership, edge cases, and error conditions
+  when applicable.
+- Include test file paths and a verification command in the task's permitted files
+  and criteria sections.
+- Do not expand this to harness-only changes, documentation, or configuration
+  tasks; TDD applies to product code only.
+
 Do not approve your own implementation; you are not the reviewer.

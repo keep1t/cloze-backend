@@ -12,10 +12,12 @@ not yet contain product migrations or endpoints.
 The [architect → developer → reviewer](docs/development-workflow.md) pipeline has
 versioned profiles in `.cursor/agents/`, independent review, and at most three
 correction rounds. Architect/design produces [atomic tasks](docs/atomic-tasks.md)
-with explicit contracts and verification. Developers receive one at a time. GPT-5.6
-Luna (medium) is the Codex/OpenCode first choice. If GPT quota is exhausted, the
-coordinator manually selects, verifies, and records an available free model; there is
-no automatic fallback. Details are in [docs/development-tools.md](docs/development-tools.md).
+with explicit contracts and verification. Developers receive one at a time. For
+product code, the architect writes failing tests before the developer implements;
+see [test-driven development](docs/development-workflow.md#test-driven-development).
+GPT-5.6 Luna (medium) is the Codex/OpenCode first choice. If GPT quota is exhausted,
+the coordinator manually selects, verifies, and records an available free model; there
+is no automatic fallback. Details are in [docs/development-tools.md](docs/development-tools.md).
 
 All persisted artifacts must be English: code/comments, tests, documentation, prompts,
 task records, configuration prose, reports, and commit messages. Users may communicate
@@ -34,6 +36,10 @@ The current uncommitted harness policy delivery is
 [`harness-srp-determinism`](docs/tasks/harness-srp-determinism.md). It is
 technically reviewed and changes no product behavior, schema, RLS, privacy boundary,
 secrets, or runtime configuration.
+
+The current uncommitted harness policy delivery is
+[`harness-tdd`](docs/tasks/harness-tdd.md). It is technically reviewed and adds
+test-driven development to the pipeline.
 
 Shared professional skills live in `.agents/skills/`; `skills-lock.json` records their
 integrity. [MEMORY.md](MEMORY.md) maintains state/decisions/outstanding work; AGENTS
@@ -100,3 +106,7 @@ The current uncommitted harness policy delivery is
 [`harness-srp-determinism`](docs/tasks/harness-srp-determinism.md). It is implemented
 and awaiting independent technical review; it changes no product behavior, schema,
 RLS, privacy boundary, secrets, or runtime configuration.
+
+The current uncommitted harness policy delivery is
+[`harness-tdd`](docs/tasks/harness-tdd.md). It is technically reviewed and adds
+test-driven development to the pipeline.
