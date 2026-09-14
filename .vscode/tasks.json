@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Cloze: security scan",
+      "type": "process",
+      "command": "python3",
+      "args": ["scripts/security_gate.py", "worktree"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Cloze: harness tests",
+      "type": "process",
+      "command": "python3",
+      "args": ["-m", "unittest", "discover", "-s", "tests"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Cloze: install Git hooks",
+      "type": "process",
+      "command": "sh",
+      "args": ["scripts/install-hooks.sh"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+---
+description: Deno TypeScript Edge Function conventions for Cloze
+globs: supabase/functions/**/*.ts
+alwaysApply: false
+---
+
+# Edge Functions
+
+- Use Deno-compatible TypeScript and kebab-case function directories.
+- Keep shared utilities in `_shared`; every deployable function has its own pinned `deno.json`.
+- Parse and validate every request before use. Return intentional status codes and safe error bodies.
+- Read provider credentials from `Deno.env.get`; fail safely when they are missing and never log secrets or tokens.
+- Keep external calls bounded with timeouts where available. Handlers that may retry must be idempotent.
+- Use structured logs with request IDs and non-sensitive context only.
+- Give handlers and helpers one cohesive responsibility; extract only independently
+  meaningful or testable responsibilities, not merely to meet a line count.
+- Keep equal explicit inputs and dependencies deterministic whenever feasible. Pass
+  time, randomness, external state, concurrency, and I/O through an appropriate
+  explicit boundary; bound and validate variation where applicable, and test or
+  document observable behavior. Do not use hidden mutable state or incidental
+  nondeterminism.

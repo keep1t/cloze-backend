@@ -1,0 +1,25 @@
+---
+description: Global Cloze backend product and agent workflow rules
+alwaysApply: true
+---
+
+# Cloze backend baseline
+
+- Start every interaction with `AGENTS.md`, `MEMORY.md`, and `README.md`, then inspect only the relevant code/diff. Reuse fresh context during a continuous task.
+- After every implementation, update BOTH `MEMORY.md` and `README.md` before handoff, following the mandatory workflow in `AGENTS.md`. Include actual verification and unfinished work; keep memory compact and replace stale facts.
+
+- Keep the backend narrowly scoped to Supabase schema, policies, Edge Functions and tests.
+- Preserve the local-first architecture: do not store garment images, a copied closet, GPS history, or PII in Supabase without an explicit decision.
+- Work from the V1 requirements in `../docs/` when behavior or data scope is unclear.
+- Make small, reversible changes and run the relevant local verification before declaring work complete.
+- Never add secrets to source control, fixtures, logs, or error responses.
+- Never create/amend project commits before human review of the complete changes and explicit authorization to commit that scope. Agent approval and passing checks are insufficient. Follow the human review gate in `AGENTS.md`; leave completed work uncommitted for review.
+- For implementation, use the roles and independent review loop in `docs/development-workflow.md`; only one writer and at most three correction rounds. The coordinator owns delegation and closure.
+- Give each function or method one cohesive responsibility. Extract code only when it
+  becomes independently meaningful or testable; never use an arbitrary line-count
+  target as a design rule.
+- Default to deterministic output for equal explicit inputs and dependencies whenever
+  feasible. Make necessary time, randomness, external state, concurrency, and I/O
+  variation explicit at an appropriate boundary, bound and validate it where
+  applicable, and test or document its observable behavior. Do not rely on hidden
+  mutable state or incidental nondeterminism.

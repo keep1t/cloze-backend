@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["MEMORY.md", "README.md"],
+  "agent": {
+    "cloze-architect": {
+      "description": "Plan Cloze contracts, schema and authorization before implementation.",
+      "mode": "subagent",
+      "prompt": "{file:./.cursor/agents/cloze-architect.md}",
+      "permission": {"edit": "deny", "bash": "deny", "task": "deny"}
+    },
+    "cloze-developer": {
+      "description": "Implement the accepted Cloze plan and update memory and README.",
+      "mode": "subagent",
+      "model": "github-copilot/gpt-5.6-luna",
+      "variant": "medium",
+      "prompt": "{file:./.cursor/agents/cloze-developer.md}",
+      "permission": {"task": "deny"}
+    },
+    "cloze-reviewer": {
+      "description": "Independently review Cloze changes and evidence without editing.",
+      "mode": "subagent",
+      "prompt": "{file:./.cursor/agents/cloze-reviewer.md}",
+      "permission": {"edit": "deny", "bash": "deny", "task": "deny"}
+    }
+  }
+}

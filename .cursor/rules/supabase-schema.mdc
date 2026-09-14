@@ -1,0 +1,14 @@
+---
+description: Secure migration and RLS conventions for the Cloze Supabase schema
+globs: supabase/migrations/**/*.sql
+alwaysApply: false
+---
+
+# Database migrations
+
+- Create migrations with `supabase migration new`; do not manually invent timestamps.
+- Each exposed table enables RLS and receives least-privilege policies in the same migration.
+- Include `TO authenticated` plus an ownership or authorization predicate; role membership alone is insufficient.
+- For updates, use both `USING` and `WITH CHECK` to prevent ownership reassignment.
+- Do not use `auth.role()` or user-editable JWT metadata for authorization.
+- Prefer `security_invoker` views and `SECURITY INVOKER` functions. A justified definer function must be private, set a safe search path, check authorization, and revoke `PUBLIC` execution.

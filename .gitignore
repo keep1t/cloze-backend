@@ -1,0 +1,20 @@
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+signing_keys.json
+.env.keys
+__pycache__/
+*.pyc
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+
+# Local Supabase runtime state
+supabase/.branches/
+supabase/.temp/
