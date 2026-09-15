@@ -5,10 +5,16 @@ architecture is local-first: images and closets remain on the device.
 
 ## Current state
 
-The repository contains the initial harness: Supabase configuration, Deno quality
-rules, a Makefile for common development commands, Git controls for secrets and
-hardcoding, and tests for those controls. It does not yet contain product migrations
-or endpoints.
+The repository contains the initial Supabase product schema for runtime-managed
+configuration, owner-scoped user settings, and private server-managed entitlements.
+No business configuration values are seeded. The migration also provisions minimal
+settings rows from Auth UUIDs without copying email or user metadata. Provider setup
+and environment-managed configuration keys are documented in
+[Auth provider setup](docs/auth-provider-setup.md). A second migration adds an
+owner-scoped garment UUID registry and private, versioned textual embeddings. It stores
+neither garment images nor fixed taxonomy/model dimensions, and its externally managed
+Free limit is enforced atomically on activation. Edge Function endpoints remain future
+work.
 
 The [architect → test author → developer → reviewer](docs/development-workflow.md) pipeline has
 versioned profiles in `.cursor/agents/`, independent review, and at most three
@@ -122,8 +128,9 @@ from pushed tips. Gitleaks is installed from a pinned release checksum under ign
 Integration uses no project credentials and stops its ephemeral local stack after
 the job. Checkout is pinned to v6.1.0 by full SHA for its Node 24 runtime. The `main`
 ruleset still requires owner/admin configuration after the workflow is available.
-Tests verify the harness, not product functionality; hardcoding controls
-detect known patterns, not all configuration. See [coverage and limits](docs/security-hooks.md).
+Database contract tests cover account settings, configuration readers, entitlement
+evaluation, garment identity/embedding privacy, grants, and Auth provisioning; hardcoding controls still detect known
+patterns, not all configuration. See [coverage and limits](docs/security-hooks.md).
 
 ## Work with agents
 

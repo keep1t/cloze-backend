@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-15 — backend quality tooling reviewed; human review pending.
+Last updated: 2026-09-15 — garment registry and private versioned embedding foundation implemented; independent review pending.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -8,17 +8,30 @@ history; confirm relevant facts before acting.
 
 ## Current state
 
-- Bootstrap phase: Supabase and TypeScript/Deno Edge Functions are selected. Local
-  configuration and directory structure exist; product migrations, functions, and
-  endpoint tests do not.
+- Supabase and TypeScript/Deno Edge Functions are selected. The first product migration
+  now provides private runtime configuration, owner-scoped settings, and private
+  entitlements; Edge Functions and provider endpoints do not yet exist.
+- `supabase/migrations/20260915165103_runtime_config_accounts_entitlements.sql`
+  creates no seeded business values, keeps configuration/entitlements private, applies
+  least-privilege grants/RLS, provisions settings from `auth.users` using only UUIDs,
+  and provides fail-closed typed configuration readers and entitlement evaluation.
+- `supabase/migrations/20260915181108_garment_registry_and_textual_embeddings.sql`
+  adds UUID-only garment lifecycle records and private versioned textual embeddings.
+  It deliberately has no image, PII, fixed taxonomy, vector dimension, or ANN index;
+  a private advisory-lock trigger enforces the external free-garment limit.
+- `supabase/tests/database/runtime_config_accounts_entitlements.test.sql` has 80 pgTAP
+  checks covering grants, RLS, ownership, PII minimization, configuration validation,
+  entitlement boundaries, and managed timestamp updates. Provider setup is documented in
+  `docs/auth-provider-setup.md`; it is manual operational configuration, not SQL.
 - Backend quality tooling uses Deno 2.8.2, Supabase CLI 2.105.0, and GNU Make; details
   and evidence are in `docs/tasks/backend-quality-tooling.md`. Apps and landing page
   use other repositories.
 - Supabase local ran in an earlier session. Confirm it again for dependent work,
   without printing credentials. Git hooks were installed in this clone through
   `core.hooksPath=.githooks`; each new clone must run the installer.
-- The current worktree includes uncommitted backend tooling and prior harness changes.
-  No publication or deployment occurred; inspect Git before relying on the state.
+- The current worktree contains the uncommitted first product-schema delivery alongside
+  prior harness work. No publication, deployment, or remote configuration occurred;
+  inspect Git before relying on the state.
 - Local mitigation received a final Bugbot pass with no actionable bugs and a final
   Security Review pass with no findings. Remote workflow integrity and ruleset
   activation remain explicit owner/admin decisions; do not claim remote enforcement.
@@ -104,6 +117,17 @@ isolated clone. Obtain them when needed; do not invent them.
 
 ## Verification evidence
 
+- Runtime-config delivery: its pgTAP test was written before implementation and `make
+  test-db` failed on missing product objects, then passed all 80 tests after the
+  migration and timestamp correction. `supabase db lint --local --level warning --fail-on warning` and
+  `supabase db advisors --local` found no issues; `make check` passed (security gate,
+  formatting/lint/typecheck, and 40 harness tests). The local database was reset only
+  after confirming it held no product rows. Independent review approved the artifact
+  after resolving the `updated_at` trigger finding.
+- Garment-registry delivery: its pgTAP test was written before implementation and
+  failed on missing T02 objects, then the combined database suite passed 151 tests.
+  Local lint and advisors found no issues; `make check` and `git diff --check` passed.
+  Independent review remains pending.
 - Backend quality tooling: `make check` passed (40 tests), `make doctor`, Deno
   format/lint/typecheck, empty pgTAP/function/type checks, local `db-lint`, workflow/JSON
   parsing, and `git diff --check` passed. `make check-all` was not run because the local
@@ -124,6 +148,7 @@ isolated clone. Obtain them when needed; do not invent them.
 
 - Run the workflow on GitHub after human review/publication, then have an owner/admin
   activate and verify the `main` ruleset requiring PRs and the strict `security-gate` check.
-- Define the first data contract/model, ownership, and RLS tests.
+- Independently review task `002-garment-registry-and-textual-embeddings` before the
+  coordination, idempotency, or sharing tasks.
 - Confirm remote project and Postgres version before linking/deploying.
 - Resolve classification/outfit-sharing flows while images remain on-device.
