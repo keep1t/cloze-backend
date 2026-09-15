@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-15 — garment registry and private versioned embedding foundation implemented; independent review pending.
+Last updated: 2026-09-15 — private share snapshot lifecycle implemented; independent review pending.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -19,6 +19,13 @@ history; confirm relevant facts before acting.
   adds UUID-only garment lifecycle records and private versioned textual embeddings.
   It deliberately has no image, PII, fixed taxonomy, vector dimension, or ANN index;
   a private advisory-lock trigger enforces the external free-garment limit.
+- `supabase/migrations/20260915185258_coordination_primitives.sql` adds private
+  fingerprint-only idempotency, cache, lease, rate-window, and bounded-cleanup
+  primitives for future Edge Functions. It persists neither raw request/cache keys nor
+  provider payloads, PII, locations, images, or device IDs.
+- `supabase/migrations/20260915191819_private_share_snapshots.sql` adds a private
+  snapshot bucket and opaque token-hash lifecycle; no client Storage policy or raw
+  token/object path is persisted.
 - `supabase/tests/database/runtime_config_accounts_entitlements.test.sql` has 80 pgTAP
   checks covering grants, RLS, ownership, PII minimization, configuration validation,
   entitlement boundaries, and managed timestamp updates. Provider setup is documented in
@@ -128,6 +135,10 @@ isolated clone. Obtain them when needed; do not invent them.
   failed on missing T02 objects, then the combined database suite passed 151 tests.
   Local lint and advisors found no issues; `make check` and `git diff --check` passed.
   Independent review remains pending.
+- Coordination delivery: its pgTAP test was written before implementation and failed
+  on missing T03 objects; after correction and a local reset all three suites passed
+  214 checks. Lint/advisors, `make check`, and diff check passed; independent review
+  approved the advisory-lock policy-drift fix and readable function bodies.
 - Backend quality tooling: `make check` passed (40 tests), `make doctor`, Deno
   format/lint/typecheck, empty pgTAP/function/type checks, local `db-lint`, workflow/JSON
   parsing, and `git diff --check` passed. `make check-all` was not run because the local
@@ -148,7 +159,6 @@ isolated clone. Obtain them when needed; do not invent them.
 
 - Run the workflow on GitHub after human review/publication, then have an owner/admin
   activate and verify the `main` ruleset requiring PRs and the strict `security-gate` check.
-- Independently review task `002-garment-registry-and-textual-embeddings` before the
-  coordination, idempotency, or sharing tasks.
+- Implement private share-snapshot persistence before Edge Function orchestration.
 - Confirm remote project and Postgres version before linking/deploying.
 - Resolve classification/outfit-sharing flows while images remain on-device.

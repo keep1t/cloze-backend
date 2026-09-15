@@ -14,7 +14,10 @@ and environment-managed configuration keys are documented in
 owner-scoped garment UUID registry and private, versioned textual embeddings. It stores
 neither garment images nor fixed taxonomy/model dimensions, and its externally managed
 Free limit is enforced atomically on activation. Edge Function endpoints remain future
-work.
+work. Private coordination primitives now support idempotency, opaque cache entries,
+refresh leases, fixed-window rate limits, and bounded cleanup for those endpoints.
+Private share snapshots now use an opaque token-hash lifecycle and a private Storage
+bucket; Edge endpoints and signed upload/download issuance remain future work.
 
 The [architect → test author → developer → reviewer](docs/development-workflow.md) pipeline has
 versioned profiles in `.cursor/agents/`, independent review, and at most three
