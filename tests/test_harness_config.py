@@ -95,7 +95,7 @@ class HarnessConfigTest(unittest.TestCase):
         self.assertIn('push:', workflow)
         self.assertIn('branches: [main]', workflow)
         self.assertIn('permissions:\n  contents: read', workflow)
-        self.assertIn('actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683', workflow)
+        self.assertIn('actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803', workflow)
         self.assertIn('fetch-depth: 0', workflow)
         self.assertIn('name: security-gate', workflow)
         for command in ('scripts/install_gitleaks.py', '-m unittest discover -s tests',

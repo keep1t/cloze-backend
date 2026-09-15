@@ -46,6 +46,8 @@ history; confirm relevant facts before acting.
 - GitHub Actions workflow exists for pull requests and pushes to `main`, but is not
   published or run remotely. The `main` ruleset remains inactive pending owner/admin
   configuration after the workflow check appears on GitHub.
+- The workflow pins `actions/checkout` v6.1.0 by full SHA for the Node 24 runtime;
+  see `.github/workflows/security-gate.yml`.
 - Important residual security limits: approval of a test runner or Python command still
   executes checkout-controlled code with the host's authority; review the diff and use
   an isolated credential-free environment. The PR workflow/scanner are also

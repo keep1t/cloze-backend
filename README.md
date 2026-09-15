@@ -82,8 +82,9 @@ python3 scripts/security_gate.py range <base-commit> <head-commit>
 Hooks inspect the index, commit message, pushed ref names, and all history reachable
 from pushed tips. Gitleaks is installed from a pinned release checksum under ignored
 `.tools/`. GitHub Actions repeats the tests and scans for pull requests and pushes to
-`main`. The `main` ruleset still requires owner/admin configuration after the workflow
-is available. Tests verify the harness, not product functionality; hardcoding controls
+`main`. Checkout is pinned to v6.1.0 by full SHA for its Node 24 runtime. The `main`
+ruleset still requires owner/admin configuration after the workflow is available.
+Tests verify the harness, not product functionality; hardcoding controls
 detect known patterns, not all configuration. See [coverage and limits](docs/security-hooks.md).
 
 ## Work with agents
