@@ -99,16 +99,20 @@ a completion requirement, not a claim that Git hooks can verify semantic accurac
 
 ## Baseline checks
 
-- Install the checksum-verified scanner and Git gates once per clone:
-  `python3 scripts/install_gitleaks.py && sh scripts/install-hooks.sh`.
+- Run `make doctor` to verify the configured versions of Python, Deno, and Supabase
+  CLI and to confirm Git, Make, and Docker are available.
+- Run `make setup` once per clone to install the checksum-verified scanner and Git
+  hooks. The installer preserves a different existing `core.hooksPath` and stops
+  for manual integration.
+- Run `make check` for security, Deno format/lint/type checks, and harness tests.
+- Run `make check-all CONFIRM_RESET=<local-project-id>` for the complete local
+  Supabase path. It starts the stack and rebuilds the local database from migrations
+  and seed data, replacing local database contents.
 - Before publication, run `python3 scripts/security_gate.py worktree`; Git hooks additionally scan the index and pushed history. Never bypass them. See `docs/security-hooks.md` for coverage and limitations.
 - When changing the gates, run `python3 -m unittest discover -s tests`.
 
-```sh
-supabase start
-supabase db reset
-supabase migration list --local
-deno fmt --check supabase/functions supabase/tests
-deno lint supabase/functions supabase/tests
-deno test --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY --allow-net=127.0.0.1,localhost supabase/tests
-```
+- Use `make help` for supported local and remote commands. Remote linking, Edge
+  Function deployment, and database pushes require an exact `PROJECT_REF` /
+  `CONFIRM_REMOTE` match; database pushes run a dry run first.
+- The root `deno.json` owns lint and format rules. Each Edge Function keeps its own
+  `deno.json` for dependencies and runtime configuration.

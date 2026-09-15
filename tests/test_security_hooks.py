@@ -1,3 +1,5 @@
+import contextlib
+import io
 import importlib.util
 from pathlib import Path
 import shutil
@@ -23,7 +25,9 @@ class HooksTest(unittest.TestCase):
         shutil.copytree(ROOT / '.githooks', self.repo / '.githooks')
         (self.repo / 'scripts').mkdir()
         shutil.copy(ROOT / 'scripts/security_gate.py', self.repo / 'scripts/security_gate.py')
+        shutil.copy(ROOT / 'scripts/project_tools.py', self.repo / 'scripts/project_tools.py')
         shutil.copy(ROOT / 'scripts/tool-versions.json', self.repo / 'scripts/tool-versions.json')
+        shutil.copy(ROOT / 'deno.json', self.repo / 'deno.json')
         (self.repo / '.tools').mkdir()
         shutil.copy(ROOT / '.tools/gitleaks', self.repo / '.tools/gitleaks')
         (self.repo / '.tools/gitleaks').chmod(0o755)
@@ -53,6 +57,33 @@ class HooksTest(unittest.TestCase):
         (self.repo / 'handler.ts').write_text('const timeoutMs = 5000;\n')
         self.git('add', 'handler.ts')
         self.assertNotEqual(self.git('commit', '-qm', 'blocked', check=False).returncode, 0)
+
+    def test_real_commit_accepts_formatted_staged_typescript(self):
+        (self.repo / 'handler.ts').write_text("export const result: string = 'safe';\n")
+        self.git('add', 'handler.ts')
+        result = self.git('commit', '-qm', 'clean TypeScript', check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_real_commit_blocks_unformatted_index_even_if_worktree_is_fixed(self):
+        path = self.repo / 'handler.ts'
+        path.write_text('export const result: string = "staged";\n')
+        self.git('add', 'handler.ts')
+        path.write_text("export const result: string = 'worktree';\n")
+        result = self.git('commit', '-qm', 'unformatted staged TypeScript', check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('not Deno-formatted', result.stderr)
+
+    def test_real_commit_blocks_staged_lint_error(self):
+        path = self.repo / 'handler.ts'
+        path.write_text(
+            'export function unsafe(value: string): unknown {\n'
+            '  return eval(value);\n'
+            '}\n'
+        )
+        self.git('add', 'handler.ts')
+        result = self.git('commit', '-qm', 'lint failure', check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Deno lint failed', result.stderr)
 
     def test_push_blocks_secret_removed_from_tip(self):
         # Build synthetic history with plumbing; no real secret and no hook bypass flags.
@@ -96,8 +127,9 @@ class HooksTest(unittest.TestCase):
         self.assertFalse(gate.violations('a.ts', b'const timeoutMs = config.requestTimeoutMs;'))
 
     def test_scanner_error_blocks(self):
-        with self.assertRaises(RuntimeError):
-            gate.scan([('safe.txt', b'safe')], '/usr/bin/false')
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(RuntimeError):
+                gate.scan([('safe.txt', b'safe')], '/usr/bin/false')
 
     def test_scanner_environment_is_allowlisted(self):
         self.assertEqual(gate.scanner_environment(), {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'})

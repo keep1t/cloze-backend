@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-15 — local harness mitigation implemented; remote ruleset pending.
+Last updated: 2026-09-15 — backend quality tooling reviewed; human review pending.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -11,11 +11,14 @@ history; confirm relevant facts before acting.
 - Bootstrap phase: Supabase and TypeScript/Deno Edge Functions are selected. Local
   configuration and directory structure exist; product migrations, functions, and
   endpoint tests do not.
+- Backend quality tooling uses Deno 2.8.2, Supabase CLI 2.105.0, and GNU Make; details
+  and evidence are in `docs/tasks/backend-quality-tooling.md`. Apps and landing page
+  use other repositories.
 - Supabase local ran in an earlier session. Confirm it again for dependent work,
   without printing credentials. Git hooks were installed in this clone through
   `core.hooksPath=.githooks`; each new clone must run the installer.
-- Harness findings mitigation is currently uncommitted. No publication or deployment
-  has occurred; consult Git for current worktree state.
+- The current worktree includes uncommitted backend tooling and prior harness changes.
+  No publication or deployment occurred; inspect Git before relying on the state.
 - Local mitigation received a final Bugbot pass with no actionable bugs and a final
   Security Review pass with no findings. Remote workflow integrity and ruleset
   activation remain explicit owner/admin decisions; do not claim remote enforcement.
@@ -101,42 +104,21 @@ isolated clone. Obtain them when needed; do not invent them.
 
 ## Verification evidence
 
-- Current mitigation: `python3 -m unittest discover -s tests` passed (22 tests);
-  `python3 scripts/security_gate.py worktree` passed; fresh Gitleaks installation and
-  empty-range scan passed. OpenCode effective config resolved four roles; workflow YAML
-  parsed and `git diff --check` passed. GitHub workflow execution/ruleset remain
-  unverified because this work is unpublished and repository-admin access is absent.
+- Backend quality tooling: `make check` passed (40 tests), `make doctor`, Deno
+  format/lint/typecheck, empty pgTAP/function/type checks, local `db-lint`, workflow/JSON
+  parsing, and `git diff --check` passed. `make check-all` was not run because the local
+  Supabase stack was active and reset would replace uninspected local data. Independent
+  review found/fixed `test.ts` discovery; final independent re-review approved. Human review remains pending.
+- Earlier harness mitigation: 22 harness tests, the worktree security gate, fresh
+  Gitleaks installation, and empty-range scan passed. OpenCode resolved four roles;
+  workflow YAML parsed. GitHub workflow/ruleset remain unverified until publication
+  and owner/admin setup.
 
-- Earlier hook implementation: six tests passed, including staged/historical secret,
-  hardcoding, and scanner-failure cases; worktree scan passed.
-- Earlier role/pipeline and human-review policy changes received independent technical
-  approval; scans passed. No project commits were created; human authorization pending.
-- Earlier OpenCode setup resolved three subagents; prompt/reviewer restrictions and
-  VS Code task JSON were verified. No OpenCode LLM session or VS Code UI task ran.
-- Earlier Luna setup verified `github-copilot/gpt-5.6-luna` and `medium` through
-  `opencode models github-copilot`; JSON, diff, and security checks passed.
-- Earlier skills installation passed `npx skills list --json`, `opencode debug skill`,
-  diff, and security checks. Reviewer R1 remains pending re-review.
-- Current change translated scoped project-owned harness prose and added English-only
-  policy to AGENTS, role prompts, and workflow. `git diff --check` and
-  `python3 scripts/security_gate.py worktree` passed; scoped common-Spanish-prose
-  search found no matches. Independent review returned APPROVED. No commit was
-  created; human review and explicit commit authorization remain pending.
-- `harness-srp-determinism` updated `AGENTS.md`, `.cursor/rules/core.mdc`,
-  `.cursor/rules/edge-functions.mdc`, all `.cursor/agents/cloze-*.md` prompts, and
-  `docs/development-workflow.md`. `git diff --check` and
-  `python3 scripts/security_gate.py worktree` passed. A scoped search confirmed the
-  policy in required instructions, rules, prompts, and workflow. No product behavior,
-  RLS, privacy, secrets, or runtime configuration changed. Independent review returned
-  APPROVED; no commit was created and human authorization remains pending.
-- `harness-tdd` updated `AGENTS.md`, `.cursor/agents/cloze-architect.md`,
-  `.cursor/agents/cloze-developer.md`, `.cursor/agents/cloze-reviewer.md`,
-  `docs/atomic-tasks.md`, `docs/development-workflow.md`, and
-  `docs/templates/atomic-task.md`. Created `docs/tasks/harness-tdd.md`. `git diff --check` and
-  `python3 scripts/security_gate.py worktree` passed. A scoped search confirmed the
-  policy in required instructions, rules, prompts, and workflow. No product behavior,
-  RLS, privacy, secrets, or runtime configuration changed. Independent review returned
-  APPROVED; no commit was created and human authorization remains pending.
+- Earlier hook implementation passed six targeted tests and the worktree security scan.
+- Prior English-only, SRP/determinism, TDD, role/pipeline, and skills changes have
+  separate task records; technical reviews approved them except skills reviewer R1,
+  whose re-review remains pending. No commits were created; human authorization remains
+  required for all uncommitted work.
 
 ## Outstanding work and next step
 

@@ -19,17 +19,59 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: 2.8.2
+
       - name: Install checksum-verified Gitleaks
         run: python3 scripts/install_gitleaks.py
 
-      - name: Verify harness tests
-        run: python3 -m unittest discover -s tests
-
-      - name: Scan checked-out files
-        run: python3 scripts/security_gate.py worktree
+      - name: Run fast project checks
+        run: make check
 
       - name: Scan introduced commits
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python3 scripts/security_gate.py range "$BASE_SHA" "$HEAD_SHA"
+
+  supabase-integration:
+    name: supabase-integration
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0; Node 24
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: 2.8.2
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.105.0
+
+      - name: Start local Supabase
+        run: make supabase-start
+
+      - name: Reset local database
+        run: make db-reset CONFIRM_RESET=cloze-backend
+
+      - name: Lint local database
+        run: make db-lint
+
+      - name: Run database tests
+        run: make test-db
+
+      - name: Run Edge Function tests
+        run: make test-functions
+
+      - name: Check generated database types
+        run: make types-check
+
+      - name: Stop local Supabase
+        if: ${{ always() }}
+        continue-on-error: true
+        run: make supabase-stop

@@ -76,6 +76,13 @@ class HarnessConfigTest(unittest.TestCase):
         self.assertNotIn('git diff*', bash)
         self.assertNotIn('git log*', bash)
         for command in ('git commit*', 'git push*', 'git reset*', 'git clean*',
+                        'make remote-link*', 'make deploy-function*', 'make db-push*',
+                        'make db-reset*', 'make check-all*',
+                        'python3 scripts/project_tools.py remote-link*',
+                        'python3 scripts/project_tools.py deploy-function*',
+                        'python3 scripts/project_tools.py db-push*',
+                        'python3 scripts/project_tools.py db-reset*',
+                        'python3 scripts/project_tools.py confirm-reset*',
                         'supabase functions deploy*', 'supabase db reset*',
                         'supabase secrets*', 'docker system prune*', 'printenv*'):
             self.assertEqual(bash[command], 'deny')
@@ -98,9 +105,12 @@ class HarnessConfigTest(unittest.TestCase):
         self.assertIn('actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803', workflow)
         self.assertIn('fetch-depth: 0', workflow)
         self.assertIn('name: security-gate', workflow)
-        for command in ('scripts/install_gitleaks.py', '-m unittest discover -s tests',
-                        'scripts/security_gate.py worktree', 'scripts/security_gate.py range'):
+        for command in ('scripts/install_gitleaks.py', 'make check',
+                        'scripts/security_gate.py range',
+                        'make supabase-start', 'make db-reset CONFIRM_RESET=cloze-backend',
+                        'make db-lint', 'make test-db', 'make test-functions', 'make types-check'):
             self.assertIn(command, workflow)
+        self.assertIn('scripts/security_gate.py worktree', (ROOT / 'Makefile').read_text())
         self.assertNotIn('pull_request_target', workflow)
         self.assertNotIn('secrets.', workflow)
 

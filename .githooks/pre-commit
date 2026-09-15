@@ -1,3 +1,5 @@
 #!/bin/sh
 set -eu
-exec python3 "$(git rev-parse --show-toplevel)/scripts/security_gate.py" staged
+repository_root=$(git rev-parse --show-toplevel)
+python3 "$repository_root/scripts/security_gate.py" staged
+exec python3 "$repository_root/scripts/project_tools.py" types-staged-check

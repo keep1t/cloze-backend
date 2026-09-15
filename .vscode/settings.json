@@ -2,5 +2,10 @@
   "deno.enablePaths": [
     "./supabase/functions",
     "./supabase/tests"
-  ]
+  ],
+  "deno.config": "./deno.json",
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno",
+    "editor.formatOnSave": true
+  }
 }

@@ -1,0 +1,23 @@
+{
+  "fmt": {
+    "include": ["supabase/functions", "supabase/tests"],
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "proseWrap": "preserve",
+    "semiColons": true,
+    "singleQuote": true
+  },
+  "lint": {
+    "include": ["supabase/functions", "supabase/tests"],
+    "rules": {
+      "tags": ["recommended"],
+      "include": [
+        "ban-untagged-todo",
+        "eqeqeq",
+        "explicit-module-boundary-types",
+        "no-eval",
+        "no-external-import"
+      ]
+    }
+  }
+}

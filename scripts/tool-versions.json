@@ -1,4 +1,10 @@
 {
+  "runtime": {
+    "python_minimum": "3.11",
+    "make_minimum": "4.3",
+    "deno": "2.8.2",
+    "supabase_cli": "2.105.0"
+  },
   "gitleaks": {
     "version": "8.24.3",
     "release_base_url": "https://github.com/gitleaks/gitleaks/releases/download",

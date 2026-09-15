@@ -16,12 +16,47 @@ source and integrity. The installer configured them for Codex and OpenCode; cons
 referenced by AGENTS as documents: do not assume Codex or OpenCode auto-discovers
 Cursor rules.
 
+## Make and local tooling
+
+Run `make doctor` to verify Git, GNU Make 4.3+, Docker, Python 3.11+, and the pinned Deno
+and Supabase CLI versions from `scripts/tool-versions.json`. Run `make setup` once per
+clone to install the verified Gitleaks scanner and repository hooks.
+
+The repository-root `deno.json` owns formatter and linter policy for
+`supabase/functions` and `supabase/tests`; it succeeds while those directories contain
+no source. Future Edge Functions retain their own `deno.json` files for dependencies.
+`make typecheck` uses the nearest function configuration for each entrypoint.
+`.editorconfig` supplies shared whitespace and line-ending defaults.
+
+`make check` runs the secret/hardcoding scan first, followed by format, lint, type
+checks, and Python harness tests. `make check-all CONFIRM_RESET=<local-project-id>`
+starts Supabase and resets only the local database before running database lint,
+available pgTAP and Deno tests, and generated-type verification. The reset replaces
+local database contents and requires a confirmation matching `project_id` in
+`supabase/config.toml`.
+
+Run `make help` for local development and remote operation targets. The VS Code task
+menu includes the quick checks, the explicitly confirmed full local check, stack
+start/stop, scanner installation, harness tests, and hook installation. TypeScript
+format-on-save uses the Deno formatter in the backend workspace.
+
+`make remote-link`, `make deploy-function`, and `make db-push` require an exact
+`PROJECT_REF` / `CONFIRM_REMOTE` match; these operations are denied to OpenCode's
+delegated developer role. Function deployment targets one existing kebab-case
+function and runs `make check`. Database push performs a linked dry run before
+applying migrations. CI never links to or mutates a remote project and never prints
+Supabase status credentials.
+
+GitHub Actions has two jobs: `security-gate` runs the quick `make check` path and
+scans introduced commits; `supabase-integration` installs the pinned CLI, starts an
+ephemeral local stack, resets its local database, runs database lint and available
+tests, checks generated types, and stops the stack during cleanup. No remote
+credentials are supplied to either job.
+
 ## VS Code
 
-Existing Deno configuration is limited to functions/tests. From “Tasks: Run Task”,
-run the scan, harness tests, and hook installation. There are no commit or deployment
-tasks. The editor alone does not run the agent pipeline; use Codex or OpenCode through
-its integration or terminal.
+The editor alone does not run the agent pipeline; use Codex or OpenCode through its
+integration or terminal.
 
 ## Codex
 

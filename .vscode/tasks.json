@@ -2,6 +2,47 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Cloze: Make help",
+      "type": "process",
+      "command": "make",
+      "args": ["help"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Cloze: check",
+      "type": "process",
+      "command": "make",
+      "args": ["check"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Cloze: check-all (local database reset)",
+      "type": "process",
+      "command": "make",
+      "args": ["check-all", "CONFIRM_RESET=cloze-backend"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Cloze: Supabase start",
+      "type": "process",
+      "command": "make",
+      "args": ["supabase-start"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Cloze: Supabase stop",
+      "type": "process",
+      "command": "make",
+      "args": ["supabase-stop"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
       "label": "Cloze: install verified Gitleaks",
       "type": "process",
       "command": "python3",
