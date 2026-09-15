@@ -2,6 +2,14 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Cloze: install verified Gitleaks",
+      "type": "process",
+      "command": "python3",
+      "args": ["scripts/install_gitleaks.py"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
       "label": "Cloze: security scan",
       "type": "process",
       "command": "python3",

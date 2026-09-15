@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-14 — TDD workflow implemented.
+Last updated: 2026-09-15 — local harness mitigation implemented; remote ruleset pending.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -14,8 +14,11 @@ history; confirm relevant facts before acting.
 - Supabase local ran in an earlier session. Confirm it again for dependent work,
   without printing credentials. Git hooks were installed in this clone through
   `core.hooksPath=.githooks`; each new clone must run the installer.
-- Bootstrap files remain uncommitted at the latest inspection. Consult Git; do not
-  assume publication or deployment.
+- Harness findings mitigation is currently uncommitted. No publication or deployment
+  has occurred; consult Git for current worktree state.
+- Local mitigation received a final Bugbot pass with no actionable bugs and a final
+  Security Review pass with no findings. Remote workflow integrity and ruleset
+  activation remain explicit owner/admin decisions; do not claim remote enforcement.
 - All agents read memory/README on entry and update both after each implementation.
   Pipeline profiles are in `.cursor/agents/`; one writer and an independent reviewer
   work with a maximum of three correction rounds.
@@ -29,15 +32,33 @@ history; confirm relevant facts before acting.
 - `harness-srp-determinism` is technically REVIEWED and APPROVED; human review remains
   pending. It adds practical cohesive-responsibility and deterministic-behavior
   requirements to global guidance, applicable rules, every role prompt, and the workflow.
-- `harness-tdd` is technically REVIEWED and APPROVED; human review remains
-  pending. It adds test-driven development to the pipeline: architect writes failing
-  tests for product code, developer implements to pass them. TDD applies to Edge
-  Functions, migrations, RLS, and database functions only.
+- The earlier `harness-tdd` delivery is technically reviewed; this mitigation replaces
+  its test-author assignment while retaining TDD for Edge Functions, migrations, RLS,
+  and database functions.
+- The current TDD sequence is DESIGN_READY → restricted test author → coordinator-
+  verified baseline failure → READY; see `docs/development-workflow.md`.
+- OpenCode registers architect, test-author, developer, and reviewer roles with
+  approval-default permissions, secret-read restrictions, denied external-directory,
+  delegation, and Vercel access, and role-specific edit/shell permissions.
+- Gitleaks is installed by `scripts/install_gitleaks.py` under ignored `.tools/` from
+  pinned release and executable checksums. The gate verifies version, uses a minimal
+  subprocess environment, scans pushed ref names, and supports introduced-commit ranges.
+- GitHub Actions workflow exists for pull requests and pushes to `main`, but is not
+  published or run remotely. The `main` ruleset remains inactive pending owner/admin
+  configuration after the workflow check appears on GitHub.
+- Important residual security limits: approval of a test runner or Python command still
+  executes checkout-controlled code with the host's authority; review the diff and use
+  an isolated credential-free environment. The PR workflow/scanner are also
+  self-modifiable, so requiring only the `security-gate` job with zero approvals is not
+  tamper-resistant. Owner decision is needed on trusted CI or required independent
+  review for gate/control-file changes before claiming remote enforcement.
 
 ## Decisions and boundaries
 
-- Architect/design produces READY atomic task records. Developers execute one at a
-  time and return `NEEDS_CLARIFICATION` for missing decisions. GPT-5.6 Luna (medium)
+- Architect/design produces `DESIGN_READY` task records. Product-code tests are then
+  authored and baseline-verified before the coordinator marks them READY. Developers
+  execute one at a time and return `NEEDS_CLARIFICATION` for missing decisions.
+  GPT-5.6 Luna (medium)
   is first choice; if GPT quota is exhausted, the coordinator verifies and records a
   free model. No automatic fallback or costly-model inheritance.
 - Never create/amend commits without human review and explicit authorization of final
@@ -68,6 +89,7 @@ history; confirm relevant facts before acting.
 | Tasks/model selection | `docs/atomic-tasks.md`, `docs/templates/atomic-task.md`, `docs/tasks/` |
 | Editor integration | `docs/development-tools.md`, `opencode.json`, `.vscode/tasks.json` |
 | Controls | `docs/security-hooks.md`, `scripts/security_gate.py`, `.githooks/` |
+| Scanner trust | `scripts/install_gitleaks.py`, `scripts/tool-versions.json` |
 | Harness tests | `tests/test_security_hooks.py` |
 | Local runtime | `supabase/config.toml` |
 | Product code | `supabase/functions/`, `supabase/migrations/`, `supabase/tests/` |
@@ -76,6 +98,12 @@ External requirements are in parent-workspace `../docs/` and may be absent in an
 isolated clone. Obtain them when needed; do not invent them.
 
 ## Verification evidence
+
+- Current mitigation: `python3 -m unittest discover -s tests` passed (22 tests);
+  `python3 scripts/security_gate.py worktree` passed; fresh Gitleaks installation and
+  empty-range scan passed. OpenCode effective config resolved four roles; workflow YAML
+  parsed and `git diff --check` passed. GitHub workflow execution/ruleset remain
+  unverified because this work is unpublished and repository-admin access is absent.
 
 - Earlier hook implementation: six tests passed, including staged/historical secret,
   hardcoding, and scanner-failure cases; worktree scan passed.
@@ -110,7 +138,8 @@ isolated clone. Obtain them when needed; do not invent them.
 
 ## Outstanding work and next step
 
-- Add mandatory CI and branch protection.
+- Run the workflow on GitHub after human review/publication, then have an owner/admin
+  activate and verify the `main` ruleset requiring PRs and the strict `security-gate` check.
 - Define the first data contract/model, ownership, and RLS tests.
 - Confirm remote project and Postgres version before linking/deploying.
 - Resolve classification/outfit-sharing flows while images remain on-device.

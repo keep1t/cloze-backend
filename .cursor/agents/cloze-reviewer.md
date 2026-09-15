@@ -24,7 +24,7 @@ untracked files, since git diff alone omits them. Do not review unrelated work.
 
 Check acceptance criteria, correctness, regressions, privacy/RLS, secret handling,
 external configuration, relevant test evidence, and coherence of MEMORY/README.
-For product code tasks, verify the architect's tests existed before implementation,
+For product code tasks, verify the test-author's tests existed before implementation,
 fail before and pass after, and cover the acceptance criteria. Prioritize concrete
 defects; label optional improvements as nonblocking.
 Review whether functions and methods have one cohesive responsibility without using

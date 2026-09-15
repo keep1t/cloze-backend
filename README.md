@@ -9,11 +9,12 @@ The repository contains the initial harness: Supabase configuration, global agen
 rules, Git controls for secrets and hardcoding, and tests for those controls. It does
 not yet contain product migrations or endpoints.
 
-The [architect → developer → reviewer](docs/development-workflow.md) pipeline has
+The [architect → test author → developer → reviewer](docs/development-workflow.md) pipeline has
 versioned profiles in `.cursor/agents/`, independent review, and at most three
 correction rounds. Architect/design produces [atomic tasks](docs/atomic-tasks.md)
 with explicit contracts and verification. Developers receive one at a time. For
-product code, the architect writes failing tests before the developer implements;
+product code, the architect specifies tests, a restricted test author writes them,
+and the coordinator records their expected baseline failure before implementation;
 see [test-driven development](docs/development-workflow.md#test-driven-development).
 GPT-5.6 Luna (medium) is the Codex/OpenCode first choice. If GPT quota is exhausted,
 the coordinator manually selects, verifies, and records an available free model; there
@@ -32,14 +33,16 @@ nondeterminism are prohibited as substitutes for a defined contract. See
 [AGENTS.md](AGENTS.md), the applicable `.cursor/rules/`, and the
 [development workflow](docs/development-workflow.md).
 
-The current uncommitted harness policy delivery is
-[`harness-srp-determinism`](docs/tasks/harness-srp-determinism.md). It is
-technically reviewed and changes no product behavior, schema, RLS, privacy boundary,
-secrets, or runtime configuration.
+The harness uses a test-author role to keep architecture read-only while retaining
+test-first implementation. OpenCode permissions are approval-default with restricted
+test paths, shell controls, and external-directory protections. See
+[development tools](docs/development-tools.md).
 
-The current uncommitted harness policy delivery is
-[`harness-tdd`](docs/tasks/harness-tdd.md). It is technically reviewed and adds
-test-driven development to the pipeline.
+Shell commands that execute checkout code require explicit approval, but approval
+still trusts that code and should only be granted after reviewing the diff (prefer an
+isolated environment without credentials). The proposed `security-gate` status is also
+self-modifiable from a PR; zero required approvals do not make it tamper-resistant.
+See [security hooks](docs/security-hooks.md) for the outstanding trust decision.
 
 Shared professional skills live in `.agents/skills/`; `skills-lock.json` records their
 integrity. [MEMORY.md](MEMORY.md) maintains state/decisions/outstanding work; AGENTS
@@ -58,7 +61,7 @@ delegation. See [tool setup](docs/development-tools.md).
 Requirements: Git, Python 3, Deno, Supabase CLI, and Docker for the local stack.
 
 ```sh
-go install github.com/zricethezav/gitleaks/v8@v8.24.3
+python3 scripts/install_gitleaks.py
 sh scripts/install-hooks.sh
 supabase start
 ```
@@ -73,12 +76,15 @@ publish output containing keys.
 ```sh
 python3 -m unittest discover -s tests
 python3 scripts/security_gate.py worktree
+python3 scripts/security_gate.py range <base-commit> <head-commit>
 ```
 
-Hooks inspect the index, commit message, and pushed history. A failure or missing
-dependency blocks the action. Tests verify the harness, not product functionality.
-Hardcoding controls detect known patterns, not all configuration. Local hooks can be
-bypassed; CI and branch protection remain pending. See [coverage and limits](docs/security-hooks.md).
+Hooks inspect the index, commit message, pushed ref names, and all history reachable
+from pushed tips. Gitleaks is installed from a pinned release checksum under ignored
+`.tools/`. GitHub Actions repeats the tests and scans for pull requests and pushes to
+`main`. The `main` ruleset still requires owner/admin configuration after the workflow
+is available. Tests verify the harness, not product functionality; hardcoding controls
+detect known patterns, not all configuration. See [coverage and limits](docs/security-hooks.md).
 
 ## Work with agents
 
@@ -102,11 +108,5 @@ Technical details are in [docs/agentic-harness.md](docs/agentic-harness.md) and
 [docs/security-hooks.md](docs/security-hooks.md). Initial requirements are in parent
 workspace `../docs/`; their location is recorded in memory.
 
-The current uncommitted harness policy delivery is
-[`harness-srp-determinism`](docs/tasks/harness-srp-determinism.md). It is implemented
-and awaiting independent technical review; it changes no product behavior, schema,
-RLS, privacy boundary, secrets, or runtime configuration.
-
-The current uncommitted harness policy delivery is
-[`harness-tdd`](docs/tasks/harness-tdd.md). It is technically reviewed and adds
-test-driven development to the pipeline.
+Harness implementation status and evidence live in individual
+[`docs/tasks/`](docs/tasks/) records; this README describes the current system.

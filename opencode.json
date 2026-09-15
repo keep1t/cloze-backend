@@ -6,7 +6,35 @@
       "description": "Plan Cloze contracts, schema and authorization before implementation.",
       "mode": "subagent",
       "prompt": "{file:./.cursor/agents/cloze-architect.md}",
-      "permission": {"edit": "deny", "bash": "deny", "task": "deny"}
+      "permission": {
+        "*": "ask",
+        "read": {"*": "allow", ".env": "deny", ".env.*": "deny", "*.pem": "deny", "*.key": "deny", "*.p12": "deny", "*.pfx": "deny", "signing_keys.json": "deny", "credentials*": "deny", "*credentials*": "deny", "id_rsa": "deny", "id_ed25519": "deny", ".npmrc": "deny", ".pypirc": "deny", ".aws/**": "deny", ".ssh/**": "deny", "**/.env": "deny", "**/.env.*": "deny", "**/*.pem": "deny", "**/*.key": "deny", "**/*.p12": "deny", "**/*.pfx": "deny", "**/signing_keys.json": "deny", "**/credentials*": "deny", "**/*credentials*": "deny", "**/id_rsa": "deny", "**/id_ed25519": "deny", "**/.npmrc": "deny", "**/.pypirc": "deny", "**/.aws/**": "deny", "**/.ssh/**": "deny", "supabase/.temp/**": "deny", ".env.example": "allow", "**/.env.example": "allow"},
+        "external_directory": "deny",
+        "edit": "deny",
+        "bash": "deny",
+        "task": "deny",
+        "webfetch": "ask",
+        "websearch": "ask",
+        "vercel_*": "deny",
+        "skill": {"*": "deny", "domain-modeling": "allow", "supabase": "allow", "supabase-postgres-best-practices": "allow"}
+      }
+    },
+    "cloze-test-author": {
+      "description": "Write contract-driven tests for a DESIGN_READY Cloze product task.",
+      "mode": "subagent",
+      "prompt": "{file:./.cursor/agents/cloze-test-author.md}",
+      "permission": {
+        "*": "ask",
+        "read": {"*": "allow", ".env": "deny", ".env.*": "deny", "*.pem": "deny", "*.key": "deny", "*.p12": "deny", "*.pfx": "deny", "signing_keys.json": "deny", "credentials*": "deny", "*credentials*": "deny", "id_rsa": "deny", "id_ed25519": "deny", ".npmrc": "deny", ".pypirc": "deny", ".aws/**": "deny", ".ssh/**": "deny", "**/.env": "deny", "**/.env.*": "deny", "**/*.pem": "deny", "**/*.key": "deny", "**/*.p12": "deny", "**/*.pfx": "deny", "**/signing_keys.json": "deny", "**/credentials*": "deny", "**/*credentials*": "deny", "**/id_rsa": "deny", "**/id_ed25519": "deny", "**/.npmrc": "deny", "**/.pypirc": "deny", "**/.aws/**": "deny", "**/.ssh/**": "deny", "supabase/.temp/**": "deny", ".env.example": "allow", "**/.env.example": "allow"},
+        "external_directory": "deny",
+        "edit": {"*": "deny", "supabase/tests/**": "allow"},
+        "bash": "deny",
+        "task": "deny",
+        "webfetch": "deny",
+        "websearch": "deny",
+        "vercel_*": "deny",
+        "skill": "deny"
+      }
     },
     "cloze-developer": {
       "description": "Implement the accepted Cloze plan and update memory and README.",
@@ -14,13 +42,62 @@
       "model": "github-copilot/gpt-5.6-luna",
       "variant": "medium",
       "prompt": "{file:./.cursor/agents/cloze-developer.md}",
-      "permission": {"task": "deny"}
+      "permission": {
+        "*": "ask",
+        "read": {"*": "allow", ".env": "deny", ".env.*": "deny", "*.pem": "deny", "*.key": "deny", "*.p12": "deny", "*.pfx": "deny", "signing_keys.json": "deny", "credentials*": "deny", "*credentials*": "deny", "id_rsa": "deny", "id_ed25519": "deny", ".npmrc": "deny", ".pypirc": "deny", ".aws/**": "deny", ".ssh/**": "deny", "**/.env": "deny", "**/.env.*": "deny", "**/*.pem": "deny", "**/*.key": "deny", "**/*.p12": "deny", "**/*.pfx": "deny", "**/signing_keys.json": "deny", "**/credentials*": "deny", "**/*credentials*": "deny", "**/id_rsa": "deny", "**/id_ed25519": "deny", "**/.npmrc": "deny", "**/.pypirc": "deny", "**/.aws/**": "deny", "**/.ssh/**": "deny", "supabase/.temp/**": "deny", ".env.example": "allow", "**/.env.example": "allow"},
+        "edit": "allow",
+        "external_directory": "deny",
+        "task": "deny",
+        "webfetch": "ask",
+        "websearch": "ask",
+        "bash": {
+          "*": "ask",
+          "git status --short": "allow",
+          "git diff --check": "allow",
+          "git commit*": "deny",
+          "git push*": "deny",
+          "git reset*": "deny",
+          "git clean*": "deny",
+          "git checkout*": "deny",
+          "git switch*": "deny",
+          "git rebase*": "deny",
+          "git cherry-pick*": "deny",
+          "supabase functions deploy*": "deny",
+          "supabase db push*": "deny",
+          "supabase db reset*": "deny",
+          "supabase link*": "deny",
+          "supabase projects*": "deny",
+          "supabase secrets*": "deny",
+          "docker system prune*": "deny",
+          "docker volume rm*": "deny",
+          "docker rm*": "deny",
+          "printenv*": "deny",
+          "env*": "deny",
+          "rm *": "deny",
+          "sudo *": "deny"
+        },
+        "webfetch": "ask",
+        "websearch": "ask",
+        "vercel_*": "deny",
+        "skill": {"*": "deny", "supabase": "allow", "supabase-postgres-best-practices": "allow"}
+      }
     },
     "cloze-reviewer": {
       "description": "Independently review Cloze changes and evidence without editing.",
       "mode": "subagent",
       "prompt": "{file:./.cursor/agents/cloze-reviewer.md}",
-      "permission": {"edit": "deny", "bash": "deny", "task": "deny"}
+      "permission": {
+        "*": "ask",
+        "read": {"*": "allow", ".env": "deny", ".env.*": "deny", "*.pem": "deny", "*.key": "deny", "*.p12": "deny", "*.pfx": "deny", "signing_keys.json": "deny", "credentials*": "deny", "*credentials*": "deny", "id_rsa": "deny", "id_ed25519": "deny", ".npmrc": "deny", ".pypirc": "deny", ".aws/**": "deny", ".ssh/**": "deny", "**/.env": "deny", "**/.env.*": "deny", "**/*.pem": "deny", "**/*.key": "deny", "**/*.p12": "deny", "**/*.pfx": "deny", "**/signing_keys.json": "deny", "**/credentials*": "deny", "**/*credentials*": "deny", "**/id_rsa": "deny", "**/id_ed25519": "deny", "**/.npmrc": "deny", "**/.pypirc": "deny", "**/.aws/**": "deny", "**/.ssh/**": "deny", "supabase/.temp/**": "deny", ".env.example": "allow", "**/.env.example": "allow"},
+        "external_directory": "deny",
+        "edit": "deny",
+        "bash": "deny",
+        "task": "deny",
+        "webfetch": "ask",
+        "websearch": "ask",
+        "vercel_*": "deny",
+        "skill": {"*": "deny", "code-review-and-quality": "allow", "supabase": "allow", "supabase-postgres-best-practices": "allow"}
+      }
     }
   }
 }

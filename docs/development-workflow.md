@@ -3,8 +3,8 @@
 ## Roles and execution
 
 The primary agent coordinates the workflow. Versioned definitions are in
-`.cursor/agents/cloze-architect.md`, `cloze-developer.md`, and
-`cloze-reviewer.md`. The developer uses GPT-5.6 Luna (medium), recorded by the
+`.cursor/agents/cloze-architect.md`, `cloze-test-author.md`, `cloze-developer.md`,
+and `cloze-reviewer.md`. The developer uses GPT-5.6 Luna (medium), recorded by the
 coordinator in the task before delegation, according to `docs/atomic-tasks.md`. If
 GPT quota is exhausted, the coordinator manually selects and records an available
 free model; there is no inheritance or automatic fallback.
@@ -37,7 +37,7 @@ permissions; the policy does not authorize additional access or actions.
   tested or documented as observable behavior. Hidden mutable state and incidental
   nondeterminism do not substitute for a defined contract.
 
-Architects specify these boundaries and evidence in READY tasks. Developers implement
+Architects specify these boundaries and evidence in DESIGN_READY tasks. Developers implement
 them without expanding the accepted scope. Reviewers verify them when relevant to the
 task and report concrete defects without changing files.
 
@@ -50,6 +50,8 @@ goal. For small changes, the coordinator writes the same minimum specification.
 
 - User-authorized objective and scope.
 - Role, repository directory, and paths for `AGENTS.md`, `MEMORY.md`, and `README.md`.
+- Coordinator-provided excerpts and source paths for relevant product requirements
+  held outside the repository; subagents do not access external directories.
 - Plan/acceptance criteria and relevant files.
 - Work baseline: Git state and prior changes that must be preserved.
 - Write permissions, existing evidence, and correction-round number.
@@ -60,16 +62,18 @@ that do not appear in `git diff`. There is no need to read the entire codebase.
 ## Test-driven development
 
 For product code (Edge Functions, migrations, RLS policies, database functions),
-the architect writes failing tests before the developer implements. The developer's
-job is to make those tests pass, not to write tests from a separate specification.
+the architect specifies tests, a restricted test author writes them, and the
+coordinator verifies their expected failure before the developer implements. The
+developer's job is to make those tests pass, not to write tests from a separate specification.
 
-1. **Architect** writes tests in `supabase/tests/` and verifies they fail against
-   the current codebase. Test file paths and the failing command output are part of
-   the READY deliverable.
-2. **Developer** implements the solution and runs the architect's tests until they
-   pass. The developer does not modify the architect's test files unless a contract
-   change returns to the architect.
-3. **Reviewer** checks that tests existed before implementation, fail before and
+1. **Architect** returns DESIGN_READY with test paths, coverage, and verification
+   command; it does not edit or run commands.
+2. **Test author** writes only the specified tests in `supabase/tests/`. It cannot
+   run commands. The coordinator runs them against the unchanged baseline and records
+   actual failure evidence; only then does the task become READY.
+3. **Developer** implements the solution and runs contract tests until they pass.
+   The developer does not modify those test files unless a contract change returns to design.
+4. **Reviewer** checks that tests existed before implementation, fail before and
    pass after, and cover the acceptance criteria.
 
 TDD applies to product code only. Harness, documentation, and configuration
@@ -82,19 +86,20 @@ the test-writing step.
    full workflow for contracts, schema, authorization, or architecture. For clear,
    small documentation/configuration changes, define brief criteria and send them
    directly to the developer; record the reason.
-2. **Architect:** delivers a read-only plan with failing tests for product code.
-   `NEEDS_DECISION` stops dependent work; `READY` lets the coordinator accept the
-   plan within scope.
-3. **Developer:** implements to pass the architect's tests, verifies, and updates
+2. **Architect:** delivers a read-only `DESIGN_READY` plan with test specifications
+   for product code. `NEEDS_DECISION` stops dependent work.
+3. **Test author:** writes specified tests for product code; the coordinator records
+   expected-failure evidence before marking the task READY. Harness-only tasks skip it.
+4. **Developer:** implements to pass contract tests, verifies, and updates
    memory and README. For small changes, the coordinator may take this role while
    retaining an independent reviewer.
-4. **Independent reviewer:** inspects the delivery and evidence. Does not edit.
-5. **Correction:** `CHANGES_REQUESTED` returns to the developer with concrete IDs;
+5. **Independent reviewer:** inspects the delivery and evidence. Does not edit.
+6. **Correction:** `CHANGES_REQUESTED` returns to the developer with concrete IDs;
    then it is reviewed again. A contract change returns to the architect.
-6. **Closure:** only with `APPROVED`, fulfilled criteria, required passing checks,
+7. **Closure:** only with `APPROVED`, fulfilled criteria, required passing checks,
    and coherent documentation. The coordinator consolidates review evidence in
    memory and delivers the result to the user.
-7. **Human review before commit:** deliver the final uncommitted set, including
+8. **Human review before commit:** deliver the final uncommitted set, including
    documentation, diff/new files, and evidence. Create or amend commits only after
    the human reviews and explicitly authorizes that content. Reviewer `APPROVED` is
    technical validation, not human authorization. Prior approval does not cover new
@@ -112,8 +117,9 @@ operational failures before escalation. Do not declare approval because rounds e
 
 ## Coordination and evidence
 
-- Only one writer works at a time; architect/reviewer are read-only. The coordinator
-  does not edit while the developer writes. All roles can share the filesystem.
+- Only one writer works at a time; architect/reviewer are read-only and the test author
+  may edit only task-permitted test files. The coordinator does not edit while a role
+  writes. All roles can share the filesystem.
 - The reviewer is a distinct instance from the implementer. Do not treat its own
   assessment as independent approval: provide criteria, paths, diff, and evidence.
 - The developer updates MEMORY/README for every implementation. The reviewer checks

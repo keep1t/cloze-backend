@@ -48,12 +48,15 @@ supabase/
 ## Delivery cycle
 
 1. Bound the requirement, input/output data, and authorization model.
-2. For schema changes, create the migration with `supabase migration new <name>` and
+2. Have the architect return DESIGN_READY; for product code, delegate tests to the
+   restricted test author and record the coordinator-verified failing baseline before
+   implementation is READY.
+3. For schema changes, create the migration with `supabase migration new <name>` and
    add RLS/policies within it.
-3. For endpoints, create the kebab-case function, its `deno.json`, and tests.
-4. Run the local stack and `AGENTS.md` checks.
-5. Document new environment variables in `.env.example` without real values.
-6. Update `MEMORY.md` and `README.md` with the result and actual evidence before closure.
+4. For endpoints, create the kebab-case function, its `deno.json`, and implementation.
+5. Run the local stack and `AGENTS.md` checks.
+6. Document new environment variables in `.env.example` without real values.
+7. Update `MEMORY.md` and `README.md` with the result and actual evidence before closure.
 
 ## Decisions already made
 
@@ -70,9 +73,10 @@ supabase/
   prohibit publishing secrets and hardcoding operational/business configuration.
   Declarative local values in `supabase/config.toml` remain explicit configuration.
 - Git hooks in `.githooks/` block commits and pushes for findings or scanner errors.
-  Installation, coverage, and limitations are in [security-hooks.md](security-hooks.md).
-  Each clone must install them; CI/branch protection are still absent, and `.gitignore`
-  does not protect already tracked files or history.
+  Installation and coverage are in [security-hooks.md](security-hooks.md). Each clone
+  must install the verified scanner and hooks. GitHub Actions now checks PRs and pushes
+  to `main`; an owner/admin still needs to activate the required `security-gate` ruleset.
+  `.gitignore` does not protect already tracked files or history.
 - Link the remote Supabase project and confirm its Postgres version.
 - Design the first data/authorization model for embeddings/outfits, including RLS evaluation.
 - Define the first recommendation Edge Function contract and deployment variables.

@@ -1,6 +1,10 @@
 # harness-tdd — TDD workflow for product code
 
-- Status: REVIEWED
+- Status: SUPERSEDED
+- Superseded by: `docs/tasks/harness-role-permissions.md`
+- Historical note: This record describes the original TDD proposal. Its architect-writes-tests
+  execution model is obsolete; the current workflow uses a read-only architect and a
+  restricted test author, as documented by the superseding task and current workflow.
 - Source request/plan: User request for test-driven development workflow
 - Dependencies and evidence they are ready: `harness-srp-determinism` (APPROVED), `harness-english-only` (APPROVED)
 - Developer: N/A (harness policy)
@@ -8,8 +12,8 @@
 
 ## Outcome and boundaries
 
-- Expected behavior (before → after): The architect writes failing tests as part of
-  every READY task for product code. The developer implements to pass those tests.
+- Expected behavior (historical proposal): The architect writes failing tests as part
+  of every READY task for product code. The developer implements to pass those tests.
   Tests are verified to fail before implementation begins. TDD applies to product
   code only (Edge Functions, migrations, RLS policies, database functions); harness
   and documentation changes are excluded.
@@ -37,7 +41,8 @@
   - `docs/templates/atomic-task.md`: task template with criteria/verification section
   - `AGENTS.md`: agent workflow section describes pipeline
 - Verified contracts/documentation: Existing pipeline is architect → developer → reviewer; no test-writing step exists
-- Verified assumptions: Deno test framework available (`deno test --allow-env --allow-net supabase/tests`)
+- Verified assumptions (historical): Deno test framework available; the original
+  broad environment/network flags are not current guidance.
 
 ## Implementation contract
 
@@ -63,12 +68,12 @@
 
 | ID | Observable criterion | Method/command and prerequisites | Expected result |
 | --- | --- | --- | --- |
-| AC1 | Architect prompt includes test-writing responsibility | Read `.cursor/agents/cloze-architect.md` | Contains test-writing instructions |
-| AC2 | Workflow shows TDD sequence | Read `docs/development-workflow.md` | Architect writes tests → developer implements → reviewer verifies |
+| AC1 | Original proposal assigned test-writing to architect | Historical record only | Superseded by restricted test-author workflow |
+| AC2 | Current workflow is documented by the superseding task | Read `docs/development-workflow.md` | Architect specifies tests → restricted test author writes → coordinator verifies baseline failure |
 | AC3 | Atomic tasks require tests for product code | Read `docs/atomic-tasks.md` | READY gate includes test files |
 | AC4 | Task template has test sections | Read `docs/templates/atomic-task.md` | Test verification fields present |
 | AC5 | AGENTS.md references TDD policy | Read `AGENTS.md` | TDD policy in workflow section |
-| AC6 | Scoped search finds TDD references in all required files | `rg -i "tdd\|test.driven\|failing test\|tests.*before implementation\|test.*before.*code\|write.*tests.*implement\|tests.*write.*architect" AGENTS.md .cursor/agents/ docs/atomic-tasks.md docs/development-workflow.md docs/templates/atomic-task.md` | Matches in architect prompt, workflow, atomic tasks, template |
+| AC6 | Current task records do not assign tests to the architect | Search active task records | No active task directs architect to write tests |
 | AC7 | No product behavior, RLS, privacy boundary, secrets, or runtime configuration changed | `git diff --stat` | No changes to `supabase/functions/`, `supabase/migrations/`, `.env*`, `supabase/config.toml` |
 
 ## Stop conditions

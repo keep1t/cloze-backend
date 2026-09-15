@@ -5,11 +5,12 @@ delegation. A task has one observable outcome, a closed contract, and its own
 verification; it is never “implement the entire backend” or a list of independent
 goals. It need not correspond to a commit.
 
-## READY entry gate
+## DESIGN_READY and READY gates
 
-The coordinator materializes the architect's read-only plan in `docs/tasks/<id>.md`
-using [the template](templates/atomic-task.md). For small changes it may write the
-record directly, but must not omit it. Verify:
+The coordinator materializes the architect's read-only plan in
+`docs/tasks/<id>.md` using [the template](templates/atomic-task.md). For small changes
+it may write the record directly, but must not omit it. `DESIGN_READY` means design
+decisions are resolved; it is not permission to start implementation. Verify:
 
 - One outcome and explicit scope, with completed or available dependencies.
 - Existing paths/symbols confirmed; new ones labeled proposed.
@@ -20,9 +21,10 @@ record directly, but must not omit it. Verify:
 - Numbered criteria and expected evidence: success, rejection, and authorization
   where applicable. Commands and prerequisites are verified; do not demand fictional tests.
 - No unresolved product, security, or architecture decision is in scope.
-- For product code tasks (Edge Functions, migrations, RLS, database functions):
-  test files in `supabase/tests/` with verification that they fail against the
-  current codebase. Include the failing command and output in the task.
+- For product code tasks, delegate test creation to `cloze-test-author`, restricted
+  to permitted `supabase/tests/` paths. The coordinator runs tests against the
+  unchanged baseline and records command/output showing the expected failure. Only
+  then mark the task READY and delegate implementation.
 
 If there are multiple outcomes, independent contexts, or open decisions, split the
 task or return it to design. Do not separate a migration from its RLS policies or
@@ -70,5 +72,5 @@ coordinator keeps only active task IDs/paths and status in memory. Do not duplic
 task records there. Human authorization remains required before project commits.
 
 For product code tasks, the developer's delivery must include the test results:
-the architect's tests now pass, with the command and output as evidence. The reviewer
+the test-author's tests now pass, with the command and output as evidence. The reviewer
 verifies tests existed before implementation and cover the acceptance criteria.

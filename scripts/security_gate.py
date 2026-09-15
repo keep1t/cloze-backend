@@ -2,8 +2,10 @@
 """Scan exact Git snapshots; diagnostics never contain matched content."""
 import os
 from pathlib import Path
+import hashlib
+import json
+import platform
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,15 +16,31 @@ def git(*args):
 
 
 def scanner():
-    binary = shutil.which('gitleaks')
-    if not binary:
-        candidate = Path.home() / 'go/bin/gitleaks'
-        if candidate.is_file():
-            binary = str(candidate)
-    if not binary:
-        raise RuntimeError('Gitleaks missing. Install the pinned version in docs/security-hooks.md.')
-    subprocess.run([binary, 'version'], check=True, capture_output=True)
+    root = Path(__file__).resolve().parents[1]
+    config = json.loads((root / 'scripts/tool-versions.json').read_text())['gitleaks']
+    architecture = {'x86_64': 'x64', 'aarch64': 'arm64'}.get(platform.machine())
+    if platform.system() != 'Linux' or architecture is None:
+        raise RuntimeError('Security gate supports Linux x64 and arm64 only.')
+    platform_key = f'linux_{architecture}'
+    binary = root / '.tools' / 'gitleaks'
+    if not binary.is_file() or not os.access(binary, os.X_OK):
+        raise RuntimeError('Verified Gitleaks missing. Run python3 scripts/install_gitleaks.py.')
+    if hashlib.sha256(binary.read_bytes()).hexdigest() != config['binary_sha256'][platform_key]:
+        raise RuntimeError('Gitleaks executable checksum mismatch; reinstall the verified version.')
+    completed = subprocess.run([str(binary), 'version'], check=True,
+                               capture_output=True, env=scanner_environment())
+    version = (completed.stdout + completed.stderr).decode('utf-8', errors='replace').strip()
+    if version != config['version']:
+        raise RuntimeError('Gitleaks version mismatch; reinstall the verified version.')
     return binary
+
+
+def scanner_environment():
+    return {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}
+
+
+def valid_object_id(value):
+    return len(value) in (40, 64) and re.fullmatch(r'[0-9a-fA-F]+', value) is not None
 
 
 SOURCE = {'.ts', '.tsx', '.js', '.mjs', '.cjs', '.sql', '.py', '.sh'}
@@ -86,10 +104,10 @@ def scan(entries, binary):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
         # Run outside the snapshot so repo config/ignore files cannot disable rules.
-        env = {k: v for k, v in os.environ.items() if not k.startswith('GITLEAKS_')}
+        env = scanner_environment()
         with tempfile.TemporaryDirectory(prefix='cloze-scanner-') as runner:
             completed = subprocess.run(
-                [binary, 'dir', directory, '--redact', '--no-banner', '--ignore-gitleaks-allow'],
+                [str(binary), 'dir', directory, '--redact', '--no-banner', '--ignore-gitleaks-allow'],
                 cwd=runner, env=env, capture_output=True,
             )
         if completed.returncode:
@@ -111,7 +129,15 @@ def main():
     elif mode == 'push':
         tips = []
         for line in sys.stdin:
-            _, local_oid, _, _ = line.split()
+            fields = line.split()
+            if len(fields) != 4:
+                raise RuntimeError('Malformed pre-push input.')
+            local_ref, local_oid, remote_ref, remote_oid = fields
+            if (not local_ref.startswith('refs/') or not remote_ref.startswith('refs/') or
+                    not valid_object_id(local_oid) or not valid_object_id(remote_oid) or
+                    len(local_oid) != len(remote_oid)):
+                raise RuntimeError('Malformed pre-push input.')
+            scan([('ref-name.txt', f'{local_ref}\n{remote_ref}\n'.encode())], binary)
             if set(local_oid) != {'0'}:
                 tips.append(local_oid)
         if tips:
@@ -125,6 +151,19 @@ def main():
             for commit in git('rev-list', *tips).decode().splitlines():
                 scan(snapshot(commit), binary)
                 scan([('commit-message.txt', git('show', '-s', '--format=%B', commit))], binary)
+    elif mode == 'range':
+        if len(sys.argv) != 4:
+            raise RuntimeError('Range mode requires base and head revisions.')
+        base, head = sys.argv[2:]
+        if not valid_object_id(head) or (set(base) != {'0'} and not valid_object_id(base)):
+            raise RuntimeError('Range mode requires valid commit IDs.')
+        if set(base) == {'0'}:
+            commits = git('rev-list', head).decode().splitlines()
+        else:
+            commits = git('rev-list', head, f'^{base}').decode().splitlines()
+        for commit in commits:
+            scan(snapshot(commit), binary)
+            scan([('commit-message.txt', git('show', '-s', '--format=%B', commit))], binary)
     elif mode == 'worktree':
         names = git('ls-files', '--cached', '--others', '--exclude-standard', '-z')
         entries = []

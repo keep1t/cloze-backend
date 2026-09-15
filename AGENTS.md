@@ -79,17 +79,19 @@ a completion requirement, not a claim that Git hooks can verify semantic accurac
 
 ## Agent workflow
 
-- Architect/design work must produce READY atomic task files using `docs/atomic-tasks.md` and its template. Developers receive one task at a time with verified contracts, bounded files, acceptance evidence and stop conditions. The coordinator must validate readiness even for small tasks.
-- For product code (Edge Functions, migrations, RLS, database functions), the architect writes failing tests before the developer implements. Tests are verified to fail against the current codebase and included in the READY deliverable. The developer implements to pass those tests. TDD does not apply to harness, documentation, or configuration changes.
+- Architect/design work must produce DESIGN_READY atomic task files using `docs/atomic-tasks.md` and its template. For product code, the restricted test author writes only specified tests; the coordinator verifies their expected baseline failure before marking the task READY. Developers receive one READY task at a time with verified contracts, bounded files, acceptance evidence and stop conditions. The coordinator validates readiness even for small tasks.
+- For product code (Edge Functions, migrations, RLS, database functions), the architect specifies tests, a restricted test author writes them, and the coordinator verifies their expected baseline failure before marking the task READY. The developer implements to pass those tests. TDD does not apply to harness, documentation, or configuration changes.
 - Use an explicitly selected, available lower-cost model for developer delegation; do not silently inherit a costly model or invent model IDs. Record the choice in the task; if selection is missing, resolve it before dispatch. Developers return NEEDS_CLARIFICATION instead of guessing missing design decisions.
 
 - Primary development environments are VS Code, Codex and OpenCode. See `docs/development-tools.md`. Use this file as the common entry point; do not assume Cursor rule/agent discovery outside Cursor. OpenCode role adapters live in `opencode.json`; canonical prompts remain shared in `.cursor/agents/`.
 
-- For implementation requests, coordinate the roles in `docs/development-workflow.md` using `.cursor/agents/cloze-{architect,developer,reviewer}.md`.
-- Delegate architecture when warranted and independent review after implementation. The main agent coordinates; only one writer is active at a time. Read-only roles must not edit files.
+- For implementation requests, coordinate the roles in `docs/development-workflow.md` using `.cursor/agents/cloze-{architect,test-author,developer,reviewer}.md`.
+- Delegate architecture when warranted and independent review after implementation. The main agent coordinates; only one writer is active at a time. Read-only roles must not edit files; the test-author role may edit only its assigned test paths.
 - For small changes, the coordinator may implement directly and delegate review. Never claim independent approval without a separate reviewer. Apply the three-correction-round limit and handoff requirements in the workflow.
 
-1. Read the relevant product requirement before changing behavior.
+1. Read the relevant product requirement before changing behavior. The coordinator
+   supplies excerpts and source paths from requirements outside this repository to
+   subagents; subagents do not access external directories.
 2. Check current Supabase documentation and CLI help before relying on a command or feature.
 3. Make the smallest coherent change with cohesive responsibilities and explicit,
    testable variation, then run the checks relevant to the files touched.
@@ -97,7 +99,8 @@ a completion requirement, not a claim that Git hooks can verify semantic accurac
 
 ## Baseline checks
 
-- Install Git gates once per clone: `sh scripts/install-hooks.sh`.
+- Install the checksum-verified scanner and Git gates once per clone:
+  `python3 scripts/install_gitleaks.py && sh scripts/install-hooks.sh`.
 - Before publication, run `python3 scripts/security_gate.py worktree`; Git hooks additionally scan the index and pushed history. Never bypass them. See `docs/security-hooks.md` for coverage and limitations.
 - When changing the gates, run `python3 -m unittest discover -s tests`.
 
@@ -107,5 +110,5 @@ supabase db reset
 supabase migration list --local
 deno fmt --check supabase/functions supabase/tests
 deno lint supabase/functions supabase/tests
-deno test --allow-env --allow-net supabase/tests
+deno test --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY --allow-net=127.0.0.1,localhost supabase/tests
 ```

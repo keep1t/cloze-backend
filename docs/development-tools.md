@@ -35,17 +35,31 @@ independent review is missing.
 
 ## OpenCode
 
-`opencode.json` registers the three roles as subagents, reusing prompt files and
-adding memory and README instructions. It pins `github-copilot/gpt-5.6-luna` and
+`opencode.json` registers four roles as subagents, reusing prompt files and adding
+memory and README instructions. The test author can edit only `supabase/tests/**`;
+architect and reviewer cannot edit or run shell commands. All subagents are blocked
+from external directories and delegation. Web access requires approval. Developer
+shell commands require approval except for two exact read-only Git inspections
+(`git status --short` and `git diff --check`); test runners, Python scripts, formatters,
+linters, publication, destructive Git/container/database commands, deployment,
+credential commands, and the Vercel MCP are not auto-approved (the latter is denied).
+Approving a code-execution command still trusts the code in the checkout; run untrusted
+or prompt-influenced changes only after reviewing the diff, in an isolated environment
+without credentials. Safe repository reads deny
+environment and credential files. The config pins
+`github-copilot/gpt-5.6-luna` and
 variant `medium` for `cloze-developer`. The model was found in the current installation;
 each delegation confirms availability, quota, and variant. If GPT quota is exhausted,
 the coordinator chooses and records an available free model before delegation; OpenCode
 offers no fallback list per agent in this configuration. The primary agent coordinates
-through AGENTS and can invoke profiles; they can also be mentioned as
-`@cloze-architect`, `@cloze-developer`, and `@cloze-reviewer`. Architect/reviewer lack
-edit, shell, and delegation permissions; they receive coordinator evidence and read
-files directly. The developer does not delegate. Additional tool permissions depend on
-installation; read-only and human-review rules apply to every available tool.
+through AGENTS and can invoke profiles. Skills are allowlisted by role; confirm
+effective permissions with `opencode debug config` after changes. The developer does
+not delegate.
+
+External requirements may live outside this repository in the parent workspace. The
+coordinator must provide relevant requirement excerpts and source paths in each agent
+assignment; subagents cannot read external directories and must not infer missing
+requirements.
 
 Git hooks install once per clone and work independently of the editor. They do not
 authenticate human review: no agent can commit before human review and explicit final

@@ -10,6 +10,7 @@ signing_keys.json
 .env.keys
 __pycache__/
 *.pyc
+.tools/
 
 # Editor and operating-system files
 .DS_Store
