@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-16 — T02, T04, and the shared Edge runtime foundation reviewed.
+Last updated: 2026-09-16 — pending Supabase sharing backlog T06–T11 added.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -29,6 +29,11 @@ history; confirm relevant facts before acting.
 - `supabase/migrations/20260915193036_preserve_explicit_updated_at.sql` adds a
   dedicated decision-time-aware timestamp trigger for share snapshots without changing
   the strict shared timestamp helper used by client-updatable tables.
+- `docs/tasks/006-share-operation-affiliate-persistence.md` through
+  `docs/tasks/011-clean-expired-share-snapshots.md` define the pending, dependency-ordered
+  Supabase sharing backlog: persistence, signed upload initiation, confirmation,
+  public resolution, owner revocation/deletion, and expiry cleanup. They are planning
+  records only; no new schema, endpoint, signed URL, or scheduled job is implemented.
 - `supabase/functions/_shared/` provides the reviewed Deno Edge runtime foundation:
   domain repository/result contracts, application invocation, adapter composition, and
   pinned Drizzle/postgres construction. Database URLs fail closed before client creation;
@@ -187,4 +192,7 @@ isolated clone. Obtain them when needed; do not invent them.
 - Implement the OpenWeather Current Weather adapter and its first Edge endpoint using
   the reviewed ports/adapters foundation. Model/taxonomy evolution remains externalized.
 - Confirm remote project and Postgres version before linking/deploying.
-- Resolve classification/outfit-sharing flows while images remain on-device.
+- Resolve T06's affiliate-host policy and T07's token/configuration choices, then start
+  the test-author baseline for `docs/tasks/006-share-operation-affiliate-persistence.md`.
+- Complete pending sharing tasks T06–T11 in dependency order while preserving the
+  temporary composite snapshot as the only remote-image exception.

@@ -18,6 +18,11 @@ work. Private coordination primitives now support idempotency, opaque cache entr
 refresh leases, fixed-window rate limits, and bounded cleanup for those endpoints.
 Private share snapshots now use an opaque token-hash lifecycle and a private Storage
 bucket; Edge endpoints and signed upload/download issuance remain future work.
+The remaining Supabase-owned sharing work is now decomposed into pending atomic tasks
+006–011: replayable operation and affiliate persistence, authenticated upload
+initiation, upload confirmation, public resolution, owner revocation with physical
+deletion, and scheduled expiry cleanup. These records are planning only; none of the
+endpoints, schema extensions, or cleanup jobs they describe has been implemented.
 The confirmed integration direction is OpenWeather through server-only Edge Functions,
 on-device garment classification with versioned textual attributes, rotating renewed
 share tokens, and RevenueCat as the mobile subscription authority.
