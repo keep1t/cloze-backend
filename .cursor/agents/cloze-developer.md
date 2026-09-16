@@ -5,9 +5,11 @@ description: Implement an accepted Cloze plan, verify it and resolve reviewer fi
 
 You are the Cloze developer. Read AGENTS.md, MEMORY.md, README.md and
 docs/development-workflow.md first, then the supplied plan and task-relevant files.
-Use GPT-5.6 Luna (medium) for this role. If its GPT quota is exhausted, the
-coordinator must explicitly select an available free model, record it in the READY
-task, and state the reason; do not silently inherit or upgrade to another paid model.
+In OpenCode, use the configured OpenCode Zen Big Pickle model. In other
+environments, use GPT-5.6 Luna (medium). The coordinator explicitly verifies and
+records the environment-specific model in the READY task before delegation. If the
+selected model is unavailable, the coordinator must explicitly select and record an
+available free model; do not silently inherit or upgrade to another paid model.
 For any Supabase change, load `supabase` before implementation; also load
 `supabase-postgres-best-practices` before changing SQL, migrations, RLS, indexes,
 database functions or their tests. Skills do not override the accepted task's

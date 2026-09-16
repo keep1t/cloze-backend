@@ -18,11 +18,24 @@ work. Private coordination primitives now support idempotency, opaque cache entr
 refresh leases, fixed-window rate limits, and bounded cleanup for those endpoints.
 Private share snapshots now use an opaque token-hash lifecycle and a private Storage
 bucket; Edge endpoints and signed upload/download issuance remain future work.
-The remaining Supabase-owned sharing work is now decomposed into pending atomic tasks
-006–011: replayable operation and affiliate persistence, authenticated upload
-initiation, upload confirmation, public resolution, owner revocation with physical
-deletion, and scheduled expiry cleanup. These records are planning only; none of the
-endpoints, schema extensions, or cleanup jobs they describe has been implemented.
+The remaining Supabase-owned sharing work is decomposed into pending atomic tasks
+007–011: authenticated upload initiation, upload confirmation, public resolution,
+owner revocation with physical deletion, and scheduled expiry cleanup. Task 006's
+reviewer finding R1 — missing affiliate keys raised `23502` instead of the required
+`P0001` — was resolved by [task 012](docs/tasks/012-t06-r1-null-safe-affiliate-fields.md),
+a separate task with its own correction budget: the two JSON string-type predicates
+in `20260916135232_share_operation_affiliate_persistence.sql` are now null-safe
+(`is distinct from 'string'`), so two-key objects missing either required field
+deterministically raise `P0001` before any persistence side effect. The final
+`make check-all CONFIRM_RESET=cloze-backend` passes on a fresh reset applying all
+six migrations: no schema lint errors, 5 pgTAP files / 332 tests, 8 function tests,
+and 40 harness tests; the generated-types check was explicitly skipped because
+`database.types.ts` does not exist yet. Task 006 and its T012 R1 resolution are
+technically reviewed and approved; human commit authorization is pending. Local
+`supabase start` output during check-all printed
+local DB/API/Storage credential values; no publication is authorized and local
+credential rotation/recreation is required before publication. OpenCode's developer
+uses verified active zero-cost Zen Big Pickle; Codex retains GPT-5.6 Luna (medium).
 The confirmed integration direction is OpenWeather through server-only Edge Functions,
 on-device garment classification with versioned textual attributes, rotating renewed
 share tokens, and RevenueCat as the mobile subscription authority.
@@ -40,9 +53,10 @@ with explicit contracts and verification. Developers receive one at a time. For
 product code, the architect specifies tests, a restricted test author writes them,
 and the coordinator records their expected baseline failure before implementation;
 see [test-driven development](docs/development-workflow.md#test-driven-development).
-GPT-5.6 Luna (medium) is the Codex/OpenCode first choice. If GPT quota is exhausted,
-the coordinator manually selects, verifies, and records an available free model; there
-is no automatic fallback. Details are in [docs/development-tools.md](docs/development-tools.md).
+OpenCode uses Zen Big Pickle; Codex uses GPT-5.6 Luna (medium). The coordinator
+manually verifies and records the environment-specific model before delegation and
+selects an available free model if it is unavailable. There is no automatic fallback.
+Details are in [docs/development-tools.md](docs/development-tools.md).
 
 All persisted artifacts must be English: code/comments, tests, documentation, prompts,
 task records, configuration prose, reports, and commit messages. Users may communicate
@@ -146,8 +160,10 @@ Integration uses no project credentials and stops its ephemeral local stack afte
 the job. Checkout is pinned to v6.1.0 by full SHA for its Node 24 runtime. The `main`
 ruleset still requires owner/admin configuration after the workflow is available.
 Database contract tests cover account settings, configuration readers, entitlement
-evaluation, garment identity/embedding privacy, grants, and Auth provisioning; hardcoding controls still detect known
-patterns, not all configuration. See [coverage and limits](docs/security-hooks.md).
+evaluation, garment identity/embedding privacy, grants, Auth provisioning, and share
+operation persistence with replay semantics and null-safe missing-key rejection;
+hardcoding controls still detect known patterns, not all configuration. See
+[coverage and limits](docs/security-hooks.md).
 
 ## Work with agents
 
@@ -156,10 +172,11 @@ patterns, not all configuration. See [coverage and limits](docs/security-hooks.m
 3. Implement and verify the change.
 4. Update **MEMORY.md and README.md in the same delivery**.
 
-Record GPT-5.6 Luna (medium) in every READY delegated task. OpenCode pins
-`github-copilot/gpt-5.6-luna` with `medium`; Codex receives it during subagent
-creation. Confirm availability, quota, and variant before delegation. If quota is
-exhausted, record a verified free model—do not invent IDs or inherit the primary model.
+Record the environment-specific model in every READY delegated task. OpenCode pins
+`opencode/big-pickle`; Codex receives GPT-5.6 Luna with `medium` during subagent
+creation. Confirm OpenCode availability and zero-cost metadata, or Codex availability,
+quota, and variant, before delegation. If the selected model is unavailable, record a
+verified free model—do not invent IDs or inherit the primary model.
 
 Request: “Implement [objective] following the Cloze pipeline.” The coordinator loads
 [role profiles](docs/development-workflow.md), keeps one developer as writer, and

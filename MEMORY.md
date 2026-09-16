@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-16 — pending Supabase sharing backlog T06–T11 added.
+Last updated: 2026-09-16 — T06 R1 resolved by T012 (REVIEWED and APPROVED); no human commit authorization.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -34,6 +34,29 @@ history; confirm relevant facts before acting.
   Supabase sharing backlog: persistence, signed upload initiation, confirmation,
   public resolution, owner revocation/deletion, and expiry cleanup. They are planning
   records only; no new schema, endpoint, signed URL, or scheduled job is implemented.
+  `docs/tasks/012-t06-r1-null-safe-affiliate-fields.md` is the R1 correction
+  delivery for T06: REVIEWED and APPROVED.
+- T06 share-operation persistence: `supabase/migrations/20260916135232_share_operation_affiliate_persistence.sql`
+  adds three private persistence tables (`share_operations`,
+  `share_snapshot_affiliate_links`, `share_snapshot_cleanup`) and the atomic service
+  function `private.create_share_operation`. The pgTAP suite
+  `share_operation_affiliate_persistence.test.sql` covers schema, keys, foreign keys,
+  RLS/grants, function hardening, creation/replay/conflict semantics, affiliate
+  ordering, structural validation, cleanup initialization, cascade deletion, cross-owner
+  isolation, and prohibited-persistence assertions. The historical correction rounds
+  (3/3) resolved PL/pgSQL output-variable ambiguity, table-owner ACL stripping, a
+  PUBLIC pseudo-role privilege test correction, and added NULL rejection for required
+  parameters plus jsonb_typeof string-type checks. Reviewer finding R1 (a two-key
+  affiliate object omitting `garment_ref` or `url` evaded the non-null-safe JSON type
+  check and failed later with `23502` instead of `P0001`) is RESOLVED by T012, a
+  separate task with its own 0/3 round budget, not a fourth correction round: the
+  migration's two JSON string-type predicates now use null-safe `is distinct from
+  'string'`. A fresh reset applies all six migrations; `make check-all
+  CONFIRM_RESET=cloze-backend` passed (no schema lint errors; 5 pgTAP files / 332
+  tests; 8 function tests; 40 harness tests; types check skipped because
+  `database.types.ts` is absent); `git diff --check` passed. T06 is no longer blocked
+  by R1; T012 independently approved the resolution. Human commit authorization is
+  pending.
 - `supabase/functions/_shared/` provides the reviewed Deno Edge runtime foundation:
   domain repository/result contracts, application invocation, adapter composition, and
   pinned Drizzle/postgres construction. Database URLs fail closed before client creation;
@@ -106,9 +129,9 @@ history; confirm relevant facts before acting.
 - Architect/design produces `DESIGN_READY` task records. Product-code tests are then
   authored and baseline-verified before the coordinator marks them READY. Developers
   execute one at a time and return `NEEDS_CLARIFICATION` for missing decisions.
-  GPT-5.6 Luna (medium)
-  is first choice; if GPT quota is exhausted, the coordinator verifies and records a
-  free model. No automatic fallback or costly-model inheritance.
+  OpenCode Zen Big Pickle is the OpenCode first choice and GPT-5.6 Luna (medium) is
+  the Codex first choice; the coordinator verifies and records an available free model
+  when the selected model is unavailable. No automatic fallback or costly-model inheritance.
 - Never create/amend commits without human review and explicit authorization of final
   content. Technical reviewer approval does not authorize a commit.
 - All persisted project artifacts—code/comments, tests, documentation, prompts, task
@@ -169,11 +192,33 @@ isolated clone. Obtain them when needed; do not invent them.
   on missing T03 objects; after correction and a local reset all three suites passed
   214 checks. Lint/advisors, `make check`, and diff check passed; independent review
   approved the advisory-lock policy-drift fix and readable function bodies.
+- T06 share-operation persistence: its pgTAP test was written before implementation
+  and failed on missing T06 objects. After two developer correction rounds (PL/pgSQL
+  output-variable ambiguity and table-owner ACL stripping) and a test-author
+  correction (PUBLIC pseudo-role privilege assertion), a fresh local reset passed 5
+  database suites / 319 tests, then the R1 correction round (NULL rejection for all
+  required parameters and jsonb_typeof string-type checks for affiliate
+  garment_ref/url) passed 5 suites / 329 tests on a fresh reset applying the
+  corrected migration. T012 final verification: the coordinator baseline after the
+  unchanged migration and a direct local reset failed T06 pgTAP tests 46 and 47
+  (caught `23502`, expected `P0001`); after the two null-safe predicate edits,
+  `make check-all CONFIRM_RESET=cloze-backend` passed (six migrations applied; no
+  schema lint errors; 5 pgTAP files / 332 tests; 8 function tests; 40 harness
+  tests; types check explicitly skipped because `database.types.ts` is absent);
+  `git diff --check` passed. The developer re-ran the permitted components on the
+  reset database: `make db-lint` (no schema errors), `make test-db` (Files=5,
+  Tests=332, Result: PASS), `make test-functions` (8 passed), `make types-check`
+  (skipped), `git diff --check` (clean). T06 re-review and human commit
+  authorization pending.
 - Backend quality tooling: `make check` passed (40 tests), `make doctor`, Deno
   format/lint/typecheck, empty pgTAP/function/type checks, local `db-lint`, workflow/JSON
   parsing, and `git diff --check` passed. `make check-all` was not run because the local
   Supabase stack was active and reset would replace uninspected local data. Independent
   review found/fixed `test.ts` discovery; final independent re-review approved. Human review remains pending.
+- OpenCode developer-model configuration: `opencode/big-pickle` is active and zero-cost
+  with tool-call support; `opencode debug config`, `git diff --check`, and `make check`
+  (40 harness tests) passed. Independent re-review approved the corrected model/T06
+  README state. Restart OpenCode before delegating so it loads the configuration.
 - Earlier harness mitigation: 22 harness tests, the worktree security gate, fresh
   Gitleaks installation, and empty-range scan passed. OpenCode resolved four roles;
   workflow YAML parsed. GitHub workflow/ruleset remain unverified until publication
@@ -192,7 +237,9 @@ isolated clone. Obtain them when needed; do not invent them.
 - Implement the OpenWeather Current Weather adapter and its first Edge endpoint using
   the reviewed ports/adapters foundation. Model/taxonomy evolution remains externalized.
 - Confirm remote project and Postgres version before linking/deploying.
-- Resolve T06's affiliate-host policy and T07's token/configuration choices, then start
-  the test-author baseline for `docs/tasks/006-share-operation-affiliate-persistence.md`.
-- Complete pending sharing tasks T06–T11 in dependency order while preserving the
-  temporary composite snapshot as the only remote-image exception.
+- T012 independently approved the T06 R1 resolution. After human review, complete the
+  pending sharing tasks T07–T11 in dependency order while preserving
+  the temporary composite snapshot as the only remote-image exception.
+- Local `supabase start` output during `make check-all` printed local DB/API/Storage
+  credential values; no publication is authorized and local credential
+  rotation/recreation is required before publication.

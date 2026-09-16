@@ -4,10 +4,12 @@
 
 The primary agent coordinates the workflow. Versioned definitions are in
 `.cursor/agents/cloze-architect.md`, `cloze-test-author.md`, `cloze-developer.md`,
-and `cloze-reviewer.md`. The developer uses GPT-5.6 Luna (medium), recorded by the
-coordinator in the task before delegation, according to `docs/atomic-tasks.md`. If
-GPT quota is exhausted, the coordinator manually selects and records an available
-free model; there is no inheritance or automatic fallback.
+and `cloze-reviewer.md`. In OpenCode, the developer uses OpenCode Zen Big Pickle;
+in Codex, it uses GPT-5.6 Luna (medium). The coordinator records the selected
+environment-specific model in the task before delegation, according to
+`docs/atomic-tasks.md`. If the selected model is unavailable, the coordinator
+manually selects and records an available free model; there is no inheritance or
+automatic fallback.
 
 Environments that discover `.cursor/agents/` can use those profiles directly. With
 generic subagent tools, the coordinator reads the role file and provides it as

@@ -39,8 +39,7 @@
     "cloze-developer": {
       "description": "Implement the accepted Cloze plan and update memory and README.",
       "mode": "subagent",
-      "model": "github-copilot/gpt-5.6-luna",
-      "variant": "medium",
+      "model": "opencode/big-pickle",
       "prompt": "{file:./.cursor/agents/cloze-developer.md}",
       "permission": {
         "*": "ask",

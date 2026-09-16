@@ -81,15 +81,13 @@ credential commands, and the Vercel MCP are not auto-approved (the latter is den
 Approving a code-execution command still trusts the code in the checkout; run untrusted
 or prompt-influenced changes only after reviewing the diff, in an isolated environment
 without credentials. Safe repository reads deny
-environment and credential files. The config pins
-`github-copilot/gpt-5.6-luna` and
-variant `medium` for `cloze-developer`. The model was found in the current installation;
-each delegation confirms availability, quota, and variant. If GPT quota is exhausted,
-the coordinator chooses and records an available free model before delegation; OpenCode
-offers no fallback list per agent in this configuration. The primary agent coordinates
-through AGENTS and can invoke profiles. Skills are allowlisted by role; confirm
-effective permissions with `opencode debug config` after changes. The developer does
-not delegate.
+environment and credential files. The config pins OpenCode Zen Big Pickle
+(`opencode/big-pickle`) for `cloze-developer`. The active zero-cost model was verified
+through `opencode models opencode --verbose`; each delegation reconfirms availability
+and zero-cost metadata. If it is unavailable, the coordinator chooses and records an
+available free model before delegation. The primary agent coordinates through AGENTS
+and can invoke profiles. Skills are allowlisted by role; confirm effective permissions
+with `opencode debug config` after changes. The developer does not delegate.
 
 External requirements may live outside this repository in the parent workspace. The
 coordinator must provide relevant requirement excerpts and source paths in each agent

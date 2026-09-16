@@ -33,10 +33,11 @@ and verification, not an arbitrary line limit.
 
 ## Cost-effective developer
 
-The default developer model is **GPT-5.6 Luna (medium)**. The coordinator explicitly
-selects it and records its identifier, environment, and selection reason in the task.
-Verify it is available before delegation. Do not call a model cost-effective from its
-name alone.
+The default developer model is **OpenCode Zen Big Pickle** in OpenCode and
+**GPT-5.6 Luna (medium)** in Codex. The coordinator explicitly selects the
+environment-specific model and records its identifier, environment, and selection
+reason in the task. Verify it is available before delegation. Do not call a model
+cost-effective from its name alone.
 
 Do not silently inherit a costly model. If GPT-model quota is exhausted, the
 coordinator explicitly selects an available free model, verifies its current ID, and
@@ -46,10 +47,10 @@ need not use the developer's model.
 
 In Codex, supply GPT-5.6 Luna (medium) when creating the subagent with a self-contained
 assignment. In OpenCode, `agent.cloze-developer.model` pins
-`github-copilot/gpt-5.6-luna` and `agent.cloze-developer.variant` pins `medium`.
-The model was found in this installation through `opencode models github-copilot`;
-availability, quota, and variant must be reconfirmed before each delegation. Record
-the model effectively chosen for both environments when using a free fallback.
+`opencode/big-pickle` without a variant. Verify it through
+`opencode models opencode --verbose`; availability and its zero-cost metadata must be
+reconfirmed before each delegation. Record the effectively chosen model when using a
+free fallback.
 
 The developer executes one READY record at a time. Before editing, it compares files
 and preconditions with the assignment. For nonexistent symbols, ambiguous contracts,
