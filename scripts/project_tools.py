@@ -169,6 +169,7 @@ def run_function_tests(deno_command: str) -> None:
         str(ROOT / "deno.json"),
         "--allow-env=SUPABASE_URL,SUPABASE_ANON_KEY",
         "--allow-net=127.0.0.1,localhost",
+        f"--allow-read={FUNCTION_TESTS},{ROOT / 'supabase' / 'functions'}",
         *map(str, files),
     ]
     subprocess.run(command, cwd=ROOT, check=True)

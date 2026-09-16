@@ -63,6 +63,13 @@ a completion requirement, not a claim that Git hooks can verify semantic accurac
 - Each function owns a `deno.json`; pin every dependency and favor `npm:` or `jsr:` imports over remote URL imports.
 - Validate input, return explicit HTTP status codes, log structured non-sensitive context, and keep handlers short and idempotent.
 - Secrets come from `Deno.env.get`; validate their presence at startup and never log them.
+- External integrations use ports and adapters: handlers call an application use case,
+  use cases depend on domain ports, and provider adapters own HTTP/provider details.
+  Do not call an external provider from an HTTP handler or repository.
+- Edge Function application code must depend on repository interfaces, never directly
+  on Supabase clients, SQL, or table definitions. Drizzle ORM is the persistence
+  implementation boundary; select a verified Deno-compatible driver and preserve
+  Supabase migrations as the only schema-change mechanism.
 
 ## Function responsibility and deterministic behavior
 

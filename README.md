@@ -18,6 +18,15 @@ work. Private coordination primitives now support idempotency, opaque cache entr
 refresh leases, fixed-window rate limits, and bounded cleanup for those endpoints.
 Private share snapshots now use an opaque token-hash lifecycle and a private Storage
 bucket; Edge endpoints and signed upload/download issuance remain future work.
+The confirmed integration direction is OpenWeather through server-only Edge Functions,
+on-device garment classification with versioned textual attributes, rotating renewed
+share tokens, and RevenueCat as the mobile subscription authority.
+Edge Functions follow simplified DDD: HTTP handlers call application use cases, which
+depend on repository and provider ports. Adapters own Drizzle persistence or external
+HTTP details; business code never accesses Supabase or SQL directly.
+The shared runtime foundation validates database URLs before creating a pinned Drizzle /
+postgres client, disables prepared statements for transaction pooling, and keeps the
+driver imports isolated from domain, application, and adapter composition code.
 
 The [architect → test author → developer → reviewer](docs/development-workflow.md) pipeline has
 versioned profiles in `.cursor/agents/`, independent review, and at most three

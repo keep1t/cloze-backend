@@ -1,6 +1,6 @@
 # 002 — Garment registry and versioned textual embeddings
 
-- Status: IMPLEMENTED
+- Status: REVIEWED
 - Source request/plan: Implement the Supabase backend from the Cloze V1 architecture and PRD through the Cloze pipeline.
 - Dependencies and evidence they are ready: task 001 is technically REVIEWED; it provides private typed configuration readers, private entitlement evaluation, the pinned-path `updated_at` trigger, Auth users, and owner-settings conventions.
 - Developer: the verified lower-cost `gpt-5.6-luna` medium assignment is unavailable because its quota was exhausted in task 001. The coordinator will implement this unchanged READY scope directly and request independent review.
@@ -61,9 +61,9 @@
 
 ## Delivery (complete after implementation)
 
-- Criteria met and actual evidence, commands/results, and checks not run: AC1–AC4 passed through `make test-db` (151 combined pgTAP tests); AC5 passed through local database lint, advisors, `make check`, and `git diff --check`. No remote action, deployment, or commit was run.
+- Criteria met and actual evidence, commands/results, and checks not run: AC1–AC4 passed through the original `make test-db` run (151 combined pgTAP tests) and the current local reset/re-run (268 combined pgTAP tests). AC5 passed through local database lint, advisors, `make check`, and `git diff --check`. No remote action, deployment, or commit was run.
 - Changed files and MEMORY/README update: the task migration and pgTAP contract were added; README and MEMORY.md now describe the UUID-only registry and private embeddings.
 - Test results: T02 initially failed on missing objects while T01 remained green. One production correction ensured invalid active/archive combinations defer to their declarative constraint before quota evaluation; final combined tests pass 151 checks.
-- Outstanding work and review findings with IDs: independent technical review pending.
-- Technical review status: pending.
+- Outstanding work and review findings with IDs: the earlier reviewer findings were resolved before this closure review. The closure review found no further issue.
+- Technical review status: APPROVED. The independent closure reviewer verified the ownership precheck precedes quota/configuration access, the `(user_id, status)` index, RLS/grants, and immutable migration history.
 - Human review/commit: pending; record only actual human authorization.

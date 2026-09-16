@@ -1,6 +1,6 @@
 # Project memory
 
-Last updated: 2026-09-15 — private share snapshot lifecycle implemented; independent review pending.
+Last updated: 2026-09-16 — T02, T04, and the shared Edge runtime foundation reviewed.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
@@ -26,6 +26,13 @@ history; confirm relevant facts before acting.
 - `supabase/migrations/20260915191819_private_share_snapshots.sql` adds a private
   snapshot bucket and opaque token-hash lifecycle; no client Storage policy or raw
   token/object path is persisted.
+- `supabase/migrations/20260915193036_preserve_explicit_updated_at.sql` adds a
+  dedicated decision-time-aware timestamp trigger for share snapshots without changing
+  the strict shared timestamp helper used by client-updatable tables.
+- `supabase/functions/_shared/` provides the reviewed Deno Edge runtime foundation:
+  domain repository/result contracts, application invocation, adapter composition, and
+  pinned Drizzle/postgres construction. Database URLs fail closed before client creation;
+  transaction pooling uses `prepare: false` and callers close the returned handle.
 - `supabase/tests/database/runtime_config_accounts_entitlements.test.sql` has 80 pgTAP
   checks covering grants, RLS, ownership, PII minimization, configuration validation,
   entitlement boundaries, and managed timestamp updates. Provider setup is documented in
@@ -80,6 +87,17 @@ history; confirm relevant facts before acting.
 
 ## Decisions and boundaries
 
+- Product decisions confirmed on 2026-09-15: use OpenWeather Current Weather through
+  a server-only Edge integration; classify garments on device and send only normalized
+  textual attributes for embeddings; own a versioned V1 taxonomy; rotate a share token
+  on renewal; use RevenueCat as the mobile subscription authority. Do not send garment
+  images to an AI provider unless a later explicit consent/privacy decision changes
+  the local-first boundary.
+- Edge architecture decision: use simplified DDD with handlers → application use
+  cases → domain ports; adapters implement provider ports and Drizzle-backed repository
+  ports. No handler or use case may access Supabase/SQL directly. Before production
+  adoption, verify Drizzle's driver compatibility with the Deno Supabase Edge Runtime;
+  Drizzle's Supabase documentation requires `prepare: false` for transaction pooling.
 - Architect/design produces `DESIGN_READY` task records. Product-code tests are then
   authored and baseline-verified before the coordinator marks them READY. Developers
   execute one at a time and return `NEEDS_CLARIFICATION` for missing decisions.
@@ -132,9 +150,16 @@ isolated clone. Obtain them when needed; do not invent them.
   after confirming it held no product rows. Independent review approved the artifact
   after resolving the `updated_at` trigger finding.
 - Garment-registry delivery: its pgTAP test was written before implementation and
-  failed on missing T02 objects, then the combined database suite passed 151 tests.
-  Local lint and advisors found no issues; `make check` and `git diff --check` passed.
-  Independent review remains pending.
+  failed on missing T02 objects. The current fresh local reset passes all 268 combined
+  pgTAP tests; lint/advisors, `make check`, and `git diff --check` passed. Independent
+  closure review approved the ownership precheck and required index.
+- Share-snapshot delivery: a fresh local reset applied all five migrations and passed
+  all 268 pgTAP tests. Local lint/advisors, `make check`, and diff check passed. Final
+  review approved the forward-only share-specific timestamp trigger correction.
+- Edge runtime foundation: `make test-functions` passes 8 tests, Deno type checking
+  passes, and `make check` passes its 40-test harness. The final independent review
+  approved the pinned/locked driver boundary, fail-closed configuration, and scoped
+  static import checks.
 - Coordination delivery: its pgTAP test was written before implementation and failed
   on missing T03 objects; after correction and a local reset all three suites passed
   214 checks. Lint/advisors, `make check`, and diff check passed; independent review
@@ -159,6 +184,7 @@ isolated clone. Obtain them when needed; do not invent them.
 
 - Run the workflow on GitHub after human review/publication, then have an owner/admin
   activate and verify the `main` ruleset requiring PRs and the strict `security-gate` check.
-- Implement private share-snapshot persistence before Edge Function orchestration.
+- Implement the OpenWeather Current Weather adapter and its first Edge endpoint using
+  the reviewed ports/adapters foundation. Model/taxonomy evolution remains externalized.
 - Confirm remote project and Postgres version before linking/deploying.
 - Resolve classification/outfit-sharing flows while images remain on-device.

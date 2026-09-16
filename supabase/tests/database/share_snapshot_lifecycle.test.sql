@@ -131,6 +131,17 @@ select ok(
   ),
   'share_snapshots has RLS enabled and forced'
 );
+select ok(
+  exists (
+    select 1
+    from pg_trigger as trigger_record
+    where trigger_record.tgrelid = 'private.share_snapshots'::regclass
+      and trigger_record.tgfoid = 'private.set_share_snapshot_updated_at()'::regprocedure
+      and not trigger_record.tgisinternal
+      and (trigger_record.tgtype & 16) = 16
+  ),
+  'share snapshot updates invoke their decision-time-aware timestamp function'
+);
 select is(
   (
     select count(*)::integer
@@ -241,6 +252,31 @@ values
     '2026-01-01 00:00:00+00', '2026-01-01 00:00:00+00'
   );
 
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"a1000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$update public.user_settings
+    set privacy = '{"share_history":true}'::jsonb,
+        updated_at = '2099-01-01 00:00:00+00'
+    where user_id = 'a1000000-0000-4000-8000-000000000001'$$,
+  'an authenticated owner can update settings while supplying an updated_at value'
+);
+select is(
+  (
+    select updated_at
+    from public.user_settings
+    where user_id = 'a1000000-0000-4000-8000-000000000001'
+  ),
+  transaction_timestamp(),
+  'user_settings replaces a caller-supplied updated_at with the strict trigger time'
+);
+reset role;
+select set_config('request.jwt.claims', '{}', true);
+
 set local role service_role;
 select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 
@@ -267,6 +303,31 @@ select ok(
     where share_id = 'b1000000-0000-4000-8000-000000000001'
   ),
   'create persists a pending record using the supplied decision time'
+);
+
+select lives_ok(
+  $$select * from private.create_share_snapshot(
+    'b5000000-0000-4000-8000-000000000005',
+    'a1000000-0000-4000-8000-000000000001', decode('aa20','hex'),
+    '2026-01-01 01:00:00+00', '2026-01-02 00:00:00+00',
+    '2026-01-01 00:00:00+00')$$,
+  'a pending share fixture is created for direct timestamp updates'
+);
+select lives_ok(
+  $$update private.share_snapshots
+    set expires_at = '2026-01-03 00:00:00+00'
+    where share_id = 'b5000000-0000-4000-8000-000000000005'$$,
+  'service_role can directly update private share persistence'
+);
+select cmp_ok(
+  (
+    select updated_at
+    from private.share_snapshots
+    where share_id = 'b5000000-0000-4000-8000-000000000005'
+  ),
+  '>',
+  '2026-01-01 00:00:00+00'::timestamptz,
+  'a direct service_role update advances updated_at'
 );
 
 select throws_ok(
@@ -483,21 +544,25 @@ select results_eq(
 -- Invalid direct states are rejected by table constraints.
 select throws_ok(
   $$insert into private.share_snapshots (
-    share_id, user_id, token_hash, status, upload_expires_at, expires_at
+    share_id, user_id, token_hash, status, upload_expires_at, expires_at,
+    created_at, updated_at
   ) values (
     'b4000000-0000-4000-8000-000000000004',
     'a1000000-0000-4000-8000-000000000001', decode('aa04','hex'),
-    'active', '2026-01-01 01:00:00+00', '2026-01-02 00:00:00+00')$$,
+    'active', '2026-01-01 01:00:00+00', '2026-01-02 00:00:00+00',
+    '2026-01-01 00:00:00+00', '2026-01-01 00:00:00+00')$$,
   '23514', null,
   'an active share requires an activation timestamp'
 );
 select throws_ok(
   $$insert into private.share_snapshots (
-    share_id, user_id, token_hash, status, upload_expires_at, expires_at
+    share_id, user_id, token_hash, status, upload_expires_at, expires_at,
+    created_at, updated_at
   ) values (
     'b4000000-0000-4000-8000-000000000005',
     'a1000000-0000-4000-8000-000000000001', decode('aa05','hex'),
-    'revoked', '2026-01-01 01:00:00+00', '2026-01-02 00:00:00+00')$$,
+    'revoked', '2026-01-01 01:00:00+00', '2026-01-02 00:00:00+00',
+    '2026-01-01 00:00:00+00', '2026-01-01 00:00:00+00')$$,
   '23514', null,
   'a revoked share requires a revocation timestamp'
 );

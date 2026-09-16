@@ -1,6 +1,6 @@
 # 004 — Private share snapshots and opaque token lifecycle
 
-- Status: IMPLEMENTED
+- Status: REVIEWED
 - Source: Cloze V1 sharing architecture and PRD.
 - Dependencies: reviewed T01–T03; local private Storage is available.
 - Developer: assigned after test-first baseline.
@@ -36,6 +36,6 @@ product choice: retain the token or issue a new token.
 
 ## Delivery
 
-- Baseline/evidence: `make test-db` initially failed on missing bucket/table; after implementation and local reset, all four suites passed 262 checks. Local lint/advisors, `make check`, and diff check passed.
-- Technical review: pending.
+- Baseline/evidence: `make test-db` initially failed on missing bucket/table. The final local reset applied all five migrations, then all four suites passed 268 checks; local lint/advisors, `make check`, and diff check passed.
+- Technical review: APPROVED after correction rounds. The committed T04 migration is immutable; the forward-only migration adds a dedicated decision-time-aware snapshot trigger without changing the strict shared timestamp trigger.
 - Human review/commit: pending.
