@@ -1,12 +1,41 @@
 # Project memory
 
-Last updated: 2026-09-16 — T06 R1 resolved by T012 (REVIEWED and APPROVED); no human commit authorization.
+Last updated: 2026-09-18 — T013 reset/lint and 363 pgTAP checks pass. Host
+`psql` is available and the live runner now opens its sessions, but it stalls
+waiting for a phase marker; T007 cannot start until that runner defect is resolved.
 Primary environments: VS Code, Codex, and OpenCode; adapters are in
 `opencode.json` and `.vscode/tasks.json`, with guidance in
 `docs/development-tools.md`. This file is a current-state aid, not a conversation
 history; confirm relevant facts before acting.
 
 ## Current state
+
+- T014 adds `make test-db-concurrency` and the local-only
+  `scripts/db_concurrency_runner.py`. It captures `supabase status --output json`
+  without emitting it, accepts only loopback PostgreSQL URLs, uses a temporary 0600
+  `PGPASSFILE` and scrubbed direct `psql` sessions, validates strict JSON manifests,
+  and runs manifests under `supabase/tests/database/concurrency/`.
+  Unit verification previously passed (49 tests after reviewer correction round 3);
+  the strict manifest now declares T013's owner/operation
+  `hashtextextended` lock input and the runner generates/verifies that probe.
+  Independent technical review is APPROVED.
+- T013 migration `supabase/migrations/20260916183049_share_operation_begin_upload_contract.sql`
+  is created; local reset, `make db-lint`, and `make test-db` pass (5 suites / 363
+  checks). Its remaining blocker is AC8: with installed host `psql`,
+  `make test-db-concurrency` advances beyond manifest validation and opens both
+  sessions, then waits indefinitely for a phase marker. The runner protocol needs a
+  separate correction before final verification.
+- T015 implements the marker-free concurrency phase correction in
+  `scripts/db_concurrency_runner.py`: `_finish(..., None)` permits empty successful
+  output while lock/replay markers remain strict. Its earlier harness/check evidence
+  recorded 51 tests; the current full harness cannot be certified because an existing
+  synthetic Git-hook commit test stalls. Its original live validation blocker was
+  resolved by T016, and the remaining live failure is the separate phase-marker wait.
+- T016 implements the deliberately narrow bootstrap-fixture exception: only a single
+  unquoted `auth.users.encrypted_password` identifier paired with `''` is accepted;
+  every other password occurrence remains rejected. Focused tests pass and the live
+  runner advances beyond manifest validation. Independent review and documentation
+  closeout remain pending.
 
 - Supabase and TypeScript/Deno Edge Functions are selected. The first product migration
   now provides private runtime configuration, owner-scoped settings, and private
@@ -55,8 +84,9 @@ history; confirm relevant facts before acting.
   CONFIRM_RESET=cloze-backend` passed (no schema lint errors; 5 pgTAP files / 332
   tests; 8 function tests; 40 harness tests; types check skipped because
   `database.types.ts` is absent); `git diff --check` passed. T06 is no longer blocked
-  by R1; T012 independently approved the resolution. Human commit authorization is
-  pending.
+  by R1; T012 independently approved the resolution. The delivery is recorded in
+  commits `bdda2ec` and `da40515`; no deployment or publication authorization is
+  recorded.
 - `supabase/functions/_shared/` provides the reviewed Deno Edge runtime foundation:
   domain repository/result contracts, application invocation, adapter composition, and
   pinned Drizzle/postgres construction. Database URLs fail closed before client creation;
@@ -208,8 +238,9 @@ isolated clone. Obtain them when needed; do not invent them.
   `git diff --check` passed. The developer re-ran the permitted components on the
   reset database: `make db-lint` (no schema errors), `make test-db` (Files=5,
   Tests=332, Result: PASS), `make test-functions` (8 passed), `make types-check`
-  (skipped), `git diff --check` (clean). T06 re-review and human commit
-  authorization pending.
+  (skipped), `git diff --check` (clean). T06 re-review is complete; commits
+  `bdda2ec` and `da40515` record the delivery. No deployment or publication
+  authorization is recorded.
 - Backend quality tooling: `make check` passed (40 tests), `make doctor`, Deno
   format/lint/typecheck, empty pgTAP/function/type checks, local `db-lint`, workflow/JSON
   parsing, and `git diff --check` passed. `make check-all` was not run because the local
@@ -237,7 +268,7 @@ isolated clone. Obtain them when needed; do not invent them.
 - Implement the OpenWeather Current Weather adapter and its first Edge endpoint using
   the reviewed ports/adapters foundation. Model/taxonomy evolution remains externalized.
 - Confirm remote project and Postgres version before linking/deploying.
-- T012 independently approved the T06 R1 resolution. After human review, complete the
+- T012 independently approved the T06 R1 resolution. Before deployment or publication, complete the
   pending sharing tasks T07–T11 in dependency order while preserving
   the temporary composite snapshot as the only remote-image exception.
 - Local `supabase start` output during `make check-all` printed local DB/API/Storage

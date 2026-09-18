@@ -4,7 +4,7 @@ PYTHON ?= python3
 DENO ?= deno
 SUPABASE ?= supabase
 
-.PHONY: help doctor setup fmt fmt-check lint typecheck quality test-harness test-functions test-db security check check-all supabase-start supabase-stop supabase-status db-reset db-lint functions-serve function-serve migration types types-check remote-link deploy-function db-push
+.PHONY: help doctor setup fmt fmt-check lint typecheck quality test-harness test-functions test-db test-db-concurrency security check check-all supabase-start supabase-stop supabase-status db-reset db-lint functions-serve function-serve migration types types-check remote-link deploy-function db-push
 
 help: ## Show available project commands
 	@awk 'BEGIN { FS = ":.*## " } /^[a-zA-Z0-9_-]+:.*## / { printf "%-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -41,6 +41,9 @@ test-functions: ## Run Deno tests for Edge Functions (reports when none exist)
 test-db: ## Run local pgTAP tests (reports when none exist)
 	$(PYTHON) scripts/project_tools.py test-db --supabase "$(SUPABASE)"
 
+test-db-concurrency: ## Run local two-session database concurrency manifests
+	$(PYTHON) scripts/project_tools.py test-db-concurrency --supabase "$(SUPABASE)"
+
 security: ## Scan current repository files for secrets and prohibited hardcoding
 	$(PYTHON) scripts/security_gate.py worktree
 
@@ -56,6 +59,7 @@ check-all: ## Run checks and reset local Supabase for full integration tests
 	$(MAKE) db-reset
 	$(MAKE) db-lint
 	$(MAKE) test-db
+	$(MAKE) test-db-concurrency
 	$(MAKE) test-functions
 	$(MAKE) types-check
 

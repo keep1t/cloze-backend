@@ -187,6 +187,19 @@ def run_database_tests(supabase_command: str) -> None:
     )
 
 
+def run_database_concurrency_tests(supabase_command: str) -> None:
+    """Run the credential-safe local two-session concurrency harness."""
+    runner = ROOT / "scripts" / "db_concurrency_runner.py"
+    try:
+        subprocess.run(
+            [sys.executable, str(runner), "--supabase", supabase_command],
+            cwd=ROOT,
+            check=True,
+        )
+    except subprocess.CalledProcessError as error:
+        raise ProjectToolError("Database concurrency tests failed; diagnostics were suppressed.") from error
+
+
 def local_project_id() -> str:
     with (ROOT / "supabase" / "config.toml").open("rb") as config_file:
         return tomllib.load(config_file)["project_id"]
@@ -415,7 +428,7 @@ def parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name)
         command.add_argument("--deno", default="deno")
 
-    for name in ("test-db", "status", "db-reset", "migration", "types", "types-check", "remote-link", "deploy-function", "db-push", "serve-function"):
+    for name in ("test-db", "test-db-concurrency", "status", "db-reset", "migration", "types", "types-check", "remote-link", "deploy-function", "db-push", "serve-function"):
         command = commands.add_parser(name)
         command.add_argument("--supabase", default="supabase")
 
@@ -448,6 +461,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             run_function_tests(args.deno)
         elif args.command == "test-db":
             run_database_tests(args.supabase)
+        elif args.command == "test-db-concurrency":
+            run_database_concurrency_tests(args.supabase)
         elif args.command == "status":
             safe_status(args.supabase)
         elif args.command == "db-reset":

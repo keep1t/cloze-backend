@@ -1,0 +1,11 @@
+{
+  "name": "share-operation-begin-replay",
+  "lock_expression": "owner_operation_hashtextextended_v1",
+  "lock_input": "{{USER_ID}}:{{OPERATION_ID}}",
+  "bootstrap_sql": "insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) values ('{{USER_ID}}'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'authenticated', 'authenticated', 't013-concurrency@example.test', '', '2026-02-01 00:00:00+00', '{}'::jsonb, '{}'::jsonb, '2026-02-01 00:00:00+00', '2026-02-01 00:00:00+00');",
+  "create_sql": "select * from private.begin_share_operation('{{USER_ID}}'::uuid, '{{OPERATION_ID}}'::uuid, 'e7300000-0000-4000-8000-000000000001'::uuid, decode('7301', 'hex'), 'v1', '2026-02-01 01:00:00+00'::timestamptz, '2026-02-16 00:00:00+00'::timestamptz, 'image/webp', 12345::bigint, '[]'::jsonb, '2026-02-01 00:00:00+00'::timestamptz);",
+  "lock_sql": "select '{{USER_ID}}'::uuid is not null and '{{OPERATION_ID}}'::uuid is not null;",
+  "replay_sql": "do $$ declare result_record record; begin select * into result_record from private.begin_share_operation('{{USER_ID}}'::uuid, '{{OPERATION_ID}}'::uuid, 'e7310000-0000-4000-8000-000000000001'::uuid, decode('73ff', 'hex'), 'v2', '2026-03-01 01:00:00+00'::timestamptz, '2026-03-16 00:00:00+00'::timestamptz, 'image/webp', 12345::bigint, '[]'::jsonb, '2026-02-01 00:30:00+00'::timestamptz); if result_record.decision <> 'pending_replay' or result_record.share_id <> 'e7300000-0000-4000-8000-000000000001'::uuid or result_record.token_key_version <> 'v1' or result_record.status <> 'pending' or result_record.upload_expires_at <> '2026-02-01 01:00:00+00'::timestamptz or result_record.expires_at <> '2026-02-16 00:00:00+00'::timestamptz or result_record.expected_content_type <> 'image/webp' or result_record.expected_byte_length <> 12345::bigint then raise exception using errcode = 'P0001'; end if; end $$;",
+  "teardown_sql": "delete from auth.users where id = '{{USER_ID}}'::uuid and '{{OPERATION_ID}}'::uuid is not null;",
+  "replay_marker": "T013_PENDING_REPLAY"
+}

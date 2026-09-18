@@ -1,6 +1,6 @@
 # 006 — Persist replayable share operations, canonical affiliate associations, and initial cleanup state
 
-- Status: REVIEWED; R1 resolved by [task 012](012-t06-r1-null-safe-affiliate-fields.md); historical correction round 3/3 remains accurate; no human commit authorization
+- Status: REVIEWED; R1 resolved by [task 012](012-t06-r1-null-safe-affiliate-fields.md); historical correction round 3/3 remains accurate; implementation recorded in commits `bdda2ec` and `da40515`
 - Source request/plan: Complete the Supabase-owned persistence contract required by the Eraser V1 sharing flow, extending reviewed tasks T03–T05 without introducing cloud outfit or garment-image storage.
 - Dependencies and evidence they are ready: T03, T04, and T05 are REVIEWED. T03 provides private service-role-only idempotency primitives; T04 provides the private bucket and share lifecycle functions; T05 provides the shared Edge architecture.
 - Developer: OpenCode `cloze-developer` uses OpenCode Zen Big Pickle (`opencode/big-pickle`) without a variant. The coordinator verified its active status, tool-call capability, and zero-cost metadata with `opencode models opencode --verbose` before delegation. The model replaces the unavailable GPT-5.6 Luna configuration for OpenCode only.
@@ -145,8 +145,9 @@ private.create_share_operation(
 - Technical review status: REVIEWED. T012 independently approved the R1 resolution.
   The three-correction-round limit for T06 remains exhausted and was not reset; T012
   is a separate task with its own round budget.
-- Human review/commit: Pending; record only actual human authorization. No
-  commit was created or amended.
+- Human review/commit: Recorded in commits `bdda2ec` (initial T06 delivery) and
+  `da40515` (T012/R1 resolution), authored by Alian. No deployment or publication
+  authorization is recorded.
 
 ### Test results
 
@@ -213,8 +214,8 @@ private.create_share_operation(
   three-correction-round limit was not reset; the coordinator authorized a new
   task instead of a fourth correction round. See
   [`docs/tasks/012-t06-r1-null-safe-affiliate-fields.md`](012-t06-r1-null-safe-affiliate-fields.md).
-- T012 independently approved the R1 resolution. Human commit authorization remains
-  pending.
+- T012 independently approved the R1 resolution. The implementation is recorded in
+  commit `da40515`; no deployment or publication authorization is recorded.
 
 ### Resolved reviewer finding R1
 

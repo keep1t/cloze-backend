@@ -499,6 +499,248 @@ select results_eq(
 );
 select is((select count(*)::integer from private.share_snapshot_affiliate_links where share_id = 'e6400000-0000-4000-8000-000000000001'), 0, 'empty affiliates persist no link rows');
 
+-- T013 adds the immutable, private upload contract and its caller-facing
+-- begin/replay API. These assertions intentionally precede its migration.
+select is(
+  (
+    select array_agg(column_name::text order by column_name)
+    from information_schema.columns
+    where table_schema = 'private'
+      and table_name = 'share_snapshot_upload_contract'
+  ),
+  array['expected_byte_length', 'expected_content_type', 'share_id']::text[],
+  'T013 upload contracts have exactly the required private columns'
+);
+select is(
+  (
+    select array_agg(column_name || ':' || data_type || ':' || is_nullable order by column_name)
+    from information_schema.columns
+    where table_schema = 'private'
+      and table_name = 'share_snapshot_upload_contract'
+  ),
+  array[
+    'expected_byte_length:bigint:NO',
+    'expected_content_type:text:NO',
+    'share_id:uuid:NO'
+  ]::text[],
+  'T013 upload contract columns have exact types and nullability'
+);
+select ok(
+  exists (
+    select 1 from pg_constraint
+    where conrelid = 'private.share_snapshot_upload_contract'::regclass
+      and contype = 'p'
+      and pg_get_constraintdef(oid) = 'PRIMARY KEY (share_id)'
+  )
+  and exists (
+    select 1 from pg_constraint
+    where conrelid = 'private.share_snapshot_upload_contract'::regclass
+      and contype = 'f'
+      and pg_get_constraintdef(oid) = 'FOREIGN KEY (share_id) REFERENCES private.share_snapshots(share_id) ON DELETE CASCADE'
+  ),
+  'T013 upload contract has its required key and cascading snapshot reference'
+);
+select ok(
+  exists (
+    select 1 from pg_constraint
+    where conrelid = 'private.share_snapshot_upload_contract'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) like '%expected_byte_length > 0%'
+  )
+  and exists (
+    select 1 from pg_constraint
+    where conrelid = 'private.share_snapshot_upload_contract'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid)
+        ~ 'expected_content_type[[:space:]]*=[[:space:]]*(trim|btrim)[[:space:]]*[(][[:space:]]*expected_content_type[[:space:]]*[)]'
+      and pg_get_constraintdef(oid)
+        ~ 'length[[:space:]]*[(][[:space:]]*expected_content_type[[:space:]]*[)][[:space:]]*>[[:space:]]*0'
+  ),
+  'T013 upload metadata is positive, nonempty, and already trimmed'
+);
+select ok(
+  (select relrowsecurity and relforcerowsecurity from pg_class where oid = 'private.share_snapshot_upload_contract'::regclass)
+  and not exists (
+    select 1 from pg_policies
+    where schemaname = 'private' and tablename = 'share_snapshot_upload_contract'
+  )
+  and not has_table_privilege('anon', 'private.share_snapshot_upload_contract', 'SELECT')
+  and not has_table_privilege('authenticated', 'private.share_snapshot_upload_contract', 'SELECT')
+  and has_table_privilege('service_role', 'private.share_snapshot_upload_contract', 'SELECT, INSERT, UPDATE, DELETE')
+  and not has_table_privilege('service_role', 'private.share_snapshot_upload_contract', 'TRUNCATE, REFERENCES, TRIGGER'),
+  'T013 upload contracts are RLS-forced and service-only CRUD'
+);
+select ok(
+  not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'private' and table_name = 'share_snapshot_upload_contract'
+      and column_name in (
+        'created_at', 'updated_at', 'object_name', 'object_path', 'raw_token',
+        'token_hash', 'image', 'content', 'request_body', 'owner_id', 'garment_id',
+        'outfit_id', 'email', 'provider_body'
+      )
+  ),
+  'T013 persists only declared upload metadata, never image or identifying data'
+);
+select ok(
+  to_regprocedure('private.begin_share_operation(uuid,uuid,uuid,bytea,text,timestamp with time zone,timestamp with time zone,text,bigint,jsonb,timestamp with time zone)') is not null,
+  'begin_share_operation has the exact required signature'
+);
+select ok(
+  (
+    select not procedure.prosecdef
+      and exists (
+        select 1 from unnest(coalesce(procedure.proconfig, array[]::text[])) as setting
+        where setting in ('search_path=', 'search_path=""')
+      )
+    from pg_proc as procedure
+    where procedure.oid = 'private.begin_share_operation(uuid,uuid,uuid,bytea,text,timestamp with time zone,timestamp with time zone,text,bigint,jsonb,timestamp with time zone)'::regprocedure
+  )
+  and not has_function_privilege('anon', 'private.begin_share_operation(uuid,uuid,uuid,bytea,text,timestamp with time zone,timestamp with time zone,text,bigint,jsonb,timestamp with time zone)', 'EXECUTE')
+  and not has_function_privilege('authenticated', 'private.begin_share_operation(uuid,uuid,uuid,bytea,text,timestamp with time zone,timestamp with time zone,text,bigint,jsonb,timestamp with time zone)', 'EXECUTE')
+  and has_function_privilege('service_role', 'private.begin_share_operation(uuid,uuid,uuid,bytea,text,timestamp with time zone,timestamp with time zone,text,bigint,jsonb,timestamp with time zone)', 'EXECUTE'),
+  'begin_share_operation is security invoker, has an empty search path, and is service-only'
+);
+
+-- First begin creates every T04, T06, and T013 row in one contract.
+select results_eq(
+  $$select * from private.begin_share_operation(
+    'c6100000-0000-4000-8000-000000000001', 'd7100000-0000-4000-8000-000000000001',
+    'e7100000-0000-4000-8000-000000000001', decode('7101','hex'), 'v1',
+    '2026-02-01 01:00:00+00', '2026-02-16 00:00:00+00', 'image/webp', 12345,
+    '[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,
+    '2026-02-01 00:00:00+00')$$,
+  $$values (
+    'created'::text, 'e7100000-0000-4000-8000-000000000001'::uuid, 'v1'::text,
+    'pending'::text, '2026-02-01 01:00:00+00'::timestamptz,
+    '2026-02-16 00:00:00+00'::timestamptz, 'image/webp'::text, 12345::bigint
+  )$$,
+  'first begin atomically creates and returns the immutable upload contract'
+);
+select is(
+  (select count(*)::integer from private.share_snapshots where share_id = 'e7100000-0000-4000-8000-000000000001')
+  + (select count(*)::integer from private.share_operations where share_id = 'e7100000-0000-4000-8000-000000000001')
+  + (select count(*)::integer from private.share_snapshot_affiliate_links where share_id = 'e7100000-0000-4000-8000-000000000001')
+  + (select count(*)::integer from private.share_snapshot_cleanup where share_id = 'e7100000-0000-4000-8000-000000000001')
+  + (select count(*)::integer from private.share_snapshot_upload_contract where share_id = 'e7100000-0000-4000-8000-000000000001'),
+  5,
+  'first begin leaves exactly one row in each required persistence relation'
+);
+
+-- Candidate IDs, tokens, key versions, and server times are regenerated on
+-- replay; only stable client content participates in equality.
+select results_eq(
+  $$select * from private.begin_share_operation(
+    'c6100000-0000-4000-8000-000000000001', 'd7100000-0000-4000-8000-000000000001',
+    'e7110000-0000-4000-8000-000000000001', decode('71ff','hex'), 'v2',
+    '2026-03-01 01:00:00+00', '2026-03-16 00:00:00+00', 'image/webp', 12345,
+    '[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,
+    '2026-02-01 00:30:00+00')$$,
+  $$values (
+    'pending_replay'::text, 'e7100000-0000-4000-8000-000000000001'::uuid, 'v1'::text,
+    'pending'::text, '2026-02-01 01:00:00+00'::timestamptz,
+    '2026-02-16 00:00:00+00'::timestamptz, 'image/webp'::text, 12345::bigint
+  )$$,
+  'a later pending retry returns the original stored contract without replacement'
+);
+select is(
+  (select count(*)::integer from private.share_operations where owner_id = 'c6100000-0000-4000-8000-000000000001' and operation_id = 'd7100000-0000-4000-8000-000000000001'),
+  1,
+  'pending replay never creates a replacement operation'
+);
+
+select is(
+  (select count(*)::integer from (
+    select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7120000-0000-4000-8000-000000000001',decode('7102','hex'),'v2','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/png',12345,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,'2026-02-01 00:30:00+00')
+    union all select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7130000-0000-4000-8000-000000000001',decode('7103','hex'),'v2','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',54321,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,'2026-02-01 00:30:00+00')
+    union all select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7140000-0000-4000-8000-000000000001',decode('7104','hex'),'v2','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',12345,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/changed"}]'::jsonb,'2026-02-01 00:30:00+00')
+  ) as conflicts where decision = 'conflict'
+    and share_id is null and token_key_version is null and status is null
+    and upload_expires_at is null and expires_at is null
+    and expected_content_type is null and expected_byte_length is null),
+  3,
+  'stable metadata and affiliates conflict without disclosing the stored contract'
+);
+
+-- Pending deadline, active state, expiry, and revocation are terminal for the
+-- operation; no branch may silently create a replacement.
+select results_eq(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7150000-0000-4000-8000-000000000001',decode('7105','hex'),'v3','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',12345,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,'2026-02-01 01:00:00+00')$$,
+  $$values ('upload_window_expired'::text, null::uuid, null::text, null::text, null::timestamptz, null::timestamptz, null::text, null::bigint)$$,
+  'a pending operation at its upload deadline cannot renew itself'
+);
+update private.share_snapshots
+set status = 'active', activated_at = '2026-02-01 00:45:00+00', updated_at = '2026-02-01 00:45:00+00'
+where share_id = 'e7100000-0000-4000-8000-000000000001';
+select results_eq(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7160000-0000-4000-8000-000000000001',decode('7106','hex'),'v3','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',12345,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,'2026-02-02 00:00:00+00')$$,
+  $$values ('active_replay'::text, 'e7100000-0000-4000-8000-000000000001'::uuid, 'v1'::text, 'active'::text, '2026-02-01 01:00:00+00'::timestamptz, '2026-02-16 00:00:00+00'::timestamptz, 'image/webp'::text, 12345::bigint)$$,
+  'an active unexpired operation replays its original contract'
+);
+select results_eq(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7170000-0000-4000-8000-000000000001',decode('7107','hex'),'v3','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',12345,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,'2026-02-16 00:00:00+00')$$,
+  $$values ('share_expired'::text, null::uuid, null::text, null::text, null::timestamptz, null::timestamptz, null::text, null::bigint)$$,
+  'an active operation at share expiry cannot renew itself'
+);
+update private.share_snapshots
+set status = 'revoked', revoked_at = '2026-02-02 00:00:00+00', updated_at = '2026-02-02 00:00:00+00'
+where share_id = 'e7100000-0000-4000-8000-000000000001';
+select results_eq(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7100000-0000-4000-8000-000000000001','e7180000-0000-4000-8000-000000000001',decode('7108','hex'),'v3','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',12345,'[{"garment_ref":"garment-t013","url":"https://affiliate.example/t013"}]'::jsonb,'2026-02-03 00:00:00+00')$$,
+  $$values ('share_revoked'::text, null::uuid, null::text, null::text, null::timestamptz, null::timestamptz, null::text, null::bigint)$$,
+  'a revoked operation never discloses or creates a replacement'
+);
+
+-- Pre-T013 operations are deliberately unavailable rather than backfilled.
+select results_eq(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d6100000-0000-4000-8000-000000000001','e7190000-0000-4000-8000-000000000001',decode('7109','hex'),'v2','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',12345,'[{"garment_ref":"garment-a","url":"https://affiliate.example/a"},{"garment_ref":"garment-b","url":"https://affiliate.example/b"}]'::jsonb,'2026-01-01 00:30:00+00')$$,
+  $$values ('unavailable'::text, null::uuid, null::text, null::text, null::timestamptz, null::timestamptz, null::text, null::bigint)$$,
+  'a legacy T06 operation without an upload contract is unavailable without backfill'
+);
+
+select results_eq(
+  $$select * from private.begin_share_operation('c6200000-0000-4000-8000-000000000002','d7100000-0000-4000-8000-000000000001','e7210000-0000-4000-8000-000000000001',decode('7211','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/png',99,'[]'::jsonb,'2026-02-01')$$,
+  $$values ('created'::text, 'e7210000-0000-4000-8000-000000000001'::uuid, 'v1'::text, 'pending'::text, '2026-03-01 01:00:00+00'::timestamptz, '2026-03-16 00:00:00+00'::timestamptz, 'image/png'::text, 99::bigint)$$,
+  'the same operation ID for another owner is isolated from the original contract'
+);
+select results_eq(
+  $$select * from private.begin_share_operation('c6200000-0000-4000-8000-000000000002','d7220000-0000-4000-8000-000000000002','e7100000-0000-4000-8000-000000000001',decode('7222','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/png',99,'[]'::jsonb,'2026-02-01')$$,
+  $$values ('conflict'::text, null::uuid, null::text, null::text, null::timestamptz, null::timestamptz, null::text, null::bigint)$$,
+  'an unrelated share-ID collision is non-disclosing and creates no upload contract'
+);
+
+-- Invalid metadata or input must fail before any state mutation.
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7200000-0000-4000-8000-000000000001','e7200000-0000-4000-8000-000000000001',decode('7201','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00',' ',1,'[]'::jsonb,'2026-02-01')$$,
+  'P0001', null, 'a blank expected content type is rejected'
+);
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7200000-0000-4000-8000-000000000002','e7200000-0000-4000-8000-000000000002',decode('7202','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00',' image/webp ',1,'[]'::jsonb,'2026-02-01')$$,
+  'P0001', null, 'a padded expected content type is rejected'
+);
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7200000-0000-4000-8000-000000000003','e7200000-0000-4000-8000-000000000003',decode('7203','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',0,'[]'::jsonb,'2026-02-01')$$,
+  'P0001', null, 'a nonpositive expected byte length is rejected'
+);
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7200000-0000-4000-8000-000000000004','e7200000-0000-4000-8000-000000000004',decode('7204','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00',null::text,1,'[]'::jsonb,'2026-02-01')$$,
+  'P0001', null, 'expected content type is required'
+);
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7200000-0000-4000-8000-000000000005','e7200000-0000-4000-8000-000000000005',decode('7205','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',null::bigint,'[]'::jsonb,'2026-02-01')$$,
+  'P0001', null, 'expected byte length is required'
+);
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7200000-0000-4000-8000-000000000006','e7200000-0000-4000-8000-000000000006',decode('7206','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',1,'[{"garment_ref":true,"url":"https://affiliate.example/a"}]'::jsonb,'2026-02-01')$$,
+  'P0001', null, 'malformed affiliate input remains rejected by begin'
+);
+select is(
+  (select count(*)::integer from private.share_snapshots where share_id between 'e7200000-0000-4000-8000-000000000001'::uuid and 'e7200000-0000-4000-8000-000000000006'::uuid)
+  + (select count(*)::integer from private.share_snapshot_upload_contract where share_id between 'e7200000-0000-4000-8000-000000000001'::uuid and 'e7200000-0000-4000-8000-000000000006'::uuid),
+  0,
+  'invalid begin inputs leave no snapshot or upload-contract state'
+);
+
 -- The T06 cleanup row follows the snapshot lifecycle through all dependent tables.
 delete from private.share_snapshots where share_id = 'e6400000-0000-4000-8000-000000000001';
 select is(
@@ -516,6 +758,20 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"c6100000-0000-4000-8000-000000000001","role":"authenticated"}', true);
 select throws_ok($$select * from private.share_operations$$, '42501', null, 'authenticated clients cannot read share operations');
 select throws_ok($$select * from private.create_share_operation('c6100000-0000-4000-8000-000000000001','d6500000-0000-4000-8000-000000000001','e6500000-0000-4000-8000-000000000001',decode('6501','hex'),'v1','2026-01-01 01:00:00+00','2026-01-02 00:00:00+00','[]'::jsonb,'2026-01-01')$$, '42501', null, 'authenticated clients cannot invoke share creation');
+select throws_ok($$select * from private.share_snapshot_upload_contract$$, '42501', null, 'authenticated clients cannot read upload contracts');
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7300000-0000-4000-8000-000000000001','e7300000-0000-4000-8000-000000000001',decode('7301','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',1,'[]'::jsonb,'2026-02-01')$$,
+  '42501', null, 'authenticated clients cannot begin a share operation'
+);
+reset role;
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok($$select * from private.share_snapshot_upload_contract$$, '42501', null, 'anonymous clients cannot read upload contracts');
+select throws_ok(
+  $$select * from private.begin_share_operation('c6100000-0000-4000-8000-000000000001','d7310000-0000-4000-8000-000000000001','e7310000-0000-4000-8000-000000000001',decode('7311','hex'),'v1','2026-03-01 01:00:00+00','2026-03-16 00:00:00+00','image/webp',1,'[]'::jsonb,'2026-02-01')$$,
+  '42501', null, 'anonymous clients cannot begin a share operation'
+);
 reset role;
 
 select * from finish();

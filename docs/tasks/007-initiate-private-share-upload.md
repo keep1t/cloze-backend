@@ -1,8 +1,8 @@
 # 007 — Initiate an idempotent private snapshot upload
 
-- Status: PENDING
+- Status: PENDING — blocked on prerequisite T013
 - Source request/plan: Implement the authenticated Supabase Edge API consumed when the app begins the Eraser V1 share flow.
-- Dependencies and evidence they are ready: T03–T05 are REVIEWED; task 006 must be IMPLEMENTED and independently reviewed.
+- Dependencies and evidence they are ready: T03–T06 and T012 are REVIEWED. T013 must be implemented and independently reviewed because it provides replay-stable deadlines and expected upload metadata.
 - Developer: Unassigned pending coordinator verification of an available cost-effective model and environment. Do not assume model availability.
 - Global assignment correction round: 0 of 3.
 
@@ -41,6 +41,7 @@
   - Proposed replayable opaque token: unpadded base64url of HMAC-SHA-256 over a versioned, domain-separated encoding of authenticated owner UUID and operation UUID. Store only SHA-256 of the resulting token. Security review must approve this before READY.
   - Proposed required configuration names: `SHARE_TOKEN_KEYS`, `SHARE_TOKEN_ACTIVE_KEY_VERSION`, `SHARE_SNAPSHOT_TTL_SECONDS`, `SHARE_SNAPSHOT_MAX_BYTES`, `SHARE_SNAPSHOT_ALLOWED_MIME_TYPES`, `SHARE_AFFILIATE_MAX_LINKS`, `SHARE_AFFILIATE_URL_MAX_LENGTH`, `SHARE_AFFILIATE_ALLOWED_HOSTS`, and `SHARE_LANDING_BASE_URL`.
   - Values must be selected and provisioned before READY; there are no code defaults for business values. The deployed `SHARE_SNAPSHOT_TTL_SECONDS` value must represent 15 days.
+  - T013 is the required begin/replay persistence API. T007 must use its stored contract on replay rather than recomputing deadlines, candidate IDs, or token-key versions.
 
 ## Implementation contract
 
@@ -102,4 +103,3 @@
 - Outstanding work and review findings with IDs: Pending.
 - Technical review status: Pending.
 - Human review/commit: Pending; record only actual human authorization.
-

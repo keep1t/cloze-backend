@@ -2,8 +2,8 @@
 
 - Status: REVIEWED (APPROVED)
 - Source request/plan: User-authorized atomic task resolving T06 reviewer finding R1.
-- Dependencies and evidence they are ready: The uncommitted T06 migration and pgTAP
-  suite exist; T03/T04 contracts are unchanged. This task resolves T06 R1.
+- Dependencies and evidence they are ready: The T06 migration and pgTAP suite exist;
+  T03/T04 contracts are unchanged. This task resolves T06 R1.
 - Developer: OpenCode `cloze-developer` uses `opencode/big-pickle` without a variant.
   The coordinator reconfirmed its active status, tool-call capability, and zero-cost
   metadata with `opencode models opencode --verbose` before delegation.
@@ -31,7 +31,7 @@
 - Read `AGENTS.md`, `MEMORY.md`, and `README.md`.
 - Relevant paths/symbols:
   - `supabase/migrations/20260916135232_share_operation_affiliate_persistence.sql`:
-    uncommitted T06 function with the R1 predicates.
+    T06 function with the R1 predicates.
   - `supabase/tests/database/share_operation_affiliate_persistence.test.sql`: T06
     pgTAP contract suite.
   - `docs/tasks/006-share-operation-affiliate-persistence.md`: historical T06
@@ -41,8 +41,8 @@
 - Relevant external product requirements: Not applicable. This is a bounded correction
   to an accepted in-repository contract.
 - Resolved decisions: Missing JSON keys evaluate to SQL NULL, so `is distinct from
-  'string'` is required for deterministic field validation. The current uncommitted
-  T06 migration is corrected in place.
+  'string'` is required for deterministic field validation. The T06 migration is
+  corrected in place.
 
 ## Implementation contract
 
@@ -146,5 +146,5 @@
   values are recorded in this repository.
 - Technical review status: APPROVED. This technical approval does not authorize a
   commit, push, deployment, or publication.
-- Human review/commit: Pending; record only actual human authorization. No
-  commit was created or amended.
+- Human review/commit: The R1 resolution is recorded in commit `da40515`, authored
+  by Alian. No deployment or publication authorization is recorded.

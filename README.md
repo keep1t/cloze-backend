@@ -20,7 +20,16 @@ Private share snapshots now use an opaque token-hash lifecycle and a private Sto
 bucket; Edge endpoints and signed upload/download issuance remain future work.
 The remaining Supabase-owned sharing work is decomposed into pending atomic tasks
 007–011: authenticated upload initiation, upload confirmation, public resolution,
-owner revocation with physical deletion, and scheduled expiry cleanup. Task 006's
+owner revocation with physical deletion, and scheduled expiry cleanup. T007's
+prerequisite T013 has its migration implementation present; reset, lint, and 363
+pgTAP checks pass. Host `psql` is now installed. T015 corrects the harness so
+successful marker-free bootstrap, commit, and teardown phases are accepted while
+lock/replay markers remain strict; T016 then permits only the required synthetic empty
+`auth.users.encrypted_password` fixture while keeping every other password-like value
+rejected. The live T013 concurrency run now passes manifest validation and opens both
+sessions, but waits indefinitely for a `psql` phase marker. That runner-protocol issue
+must be corrected before T013 and then T007 can be completed.
+T007 Edge implementation has not started. Task 006's
 reviewer finding R1 — missing affiliate keys raised `23502` instead of the required
 `P0001` — was resolved by [task 012](docs/tasks/012-t06-r1-null-safe-affiliate-fields.md),
 a separate task with its own correction budget: the two JSON string-type predicates
@@ -31,7 +40,8 @@ deterministically raise `P0001` before any persistence side effect. The final
 six migrations: no schema lint errors, 5 pgTAP files / 332 tests, 8 function tests,
 and 40 harness tests; the generated-types check was explicitly skipped because
 `database.types.ts` does not exist yet. Task 006 and its T012 R1 resolution are
-technically reviewed and approved; human commit authorization is pending. Local
+technically reviewed and approved, and are recorded in commits `bdda2ec` and
+`da40515`; no deployment or publication authorization is recorded. Local
 `supabase start` output during check-all printed
 local DB/API/Storage credential values; no publication is authorized and local
 credential rotation/recreation is required before publication. OpenCode's developer
